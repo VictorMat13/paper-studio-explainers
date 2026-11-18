@@ -1,6 +1,6 @@
 # Ep08: What GitHub actually is (for people building with AI), script v1 (locked by the orchestrator 2026-11-07)
 
-Reference: Jesse Rurka (@jesserurka), Instagram reel DfVpRJEmVAI, 54.7 s, "What actually is GitHub? And why does everyone building with AI keep mentioning it?" (transcript in `reference/transcript.txt`, 1 fps sheet in `reference/contact-sheet-1fps.jpg`). Style: Paper Studio. Voice: Victor's Fish clone, slightly excited. CTA keyword: COMMIT (free in Boosend, all 172 comment triggers listed 2026-11-07; "repo" and "code" are taken).
+Reference: Jesse Rurka (@jesserurka), Instagram reel DfVpRJEmVAI, 54.7 s, "What actually is GitHub? And why does everyone building with AI keep mentioning it?" (transcript in `reference/transcript.txt`, 1 fps sheet in `reference/contact-sheet-1fps.jpg`). Style: Paper Studio. Voice: the creator's own clone, slightly excited. CTA keyword: COMMIT.
 
 Victor 2026-11-07: "3 hooks 3 bodies no need for approval just start doing everything", "finish all 9 videos by the time I wake up". So: every hook pairs with every body (9 Instagram videos, plus the YouTube Shorts cut of each), the bodies stand on their own after any hook, and the orchestrator picked the three hooks from the five angles below without a gate. Repeat-word check: clean on every hook-to-body pairing (hooks are not spoken back to back with each other).
 
