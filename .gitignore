@@ -1,0 +1,12 @@
+node_modules/
+out/
+build/
+.env
+.setup-complete
+.DS_Store
+__pycache__/
+*.pyc
+public/*/vo/
+episodes/*/voice/
+episodes/*/graphics/
+.encode-done

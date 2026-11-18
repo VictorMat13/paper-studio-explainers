@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JCode explainer storyboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#111;--paper:#F5F5F5;--mute:#777;--line:#E2E2E2}
+  *{box-sizing:border-box}
+  body{margin:0;background:#FAFAFA;color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.45}
+  header{padding:36px 40px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5;display:flex;gap:40px;align-items:flex-end;flex-wrap:wrap}
+  header h1{margin:0 0 6px;font-size:26px;font-weight:800;letter-spacing:-.5px}
+  header p{margin:2px 0;color:#444}
+  header .meta{display:flex;gap:28px;flex-wrap:wrap;font-size:13px;color:#333}
+  header .meta b{display:block;font-size:18px;font-weight:800}
+  button#safe{margin-left:auto;padding:10px 16px;border-radius:8px;border:1px solid #111;background:#fff;font:600 13px Inter;cursor:pointer}
+  body.safe button#safe{background:#111;color:#fff}
+  section{padding:30px 40px}
+  h2{font-size:20px;font-weight:800;margin:0 0 4px;letter-spacing:-.3px}
+  h2 small{font-weight:400;color:var(--mute);font-size:13px;margin-left:10px}
+  .sub{color:#555;margin:0 0 18px}
+  .hooks{display:grid;grid-template-columns:1fr;gap:22px}
+  .hook{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+  .hook h3{margin:0 0 4px;font-size:15px;font-weight:800}
+  .hook .line{font-size:13px;color:#333;margin:0 0 12px}
+  .hook .frames{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px 18px}
+  .shot{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 12px;display:flex;flex-direction:column;gap:8px}
+  .shot.break{background:#F3F3F3}
+  .frame{width:300px;height:533px;position:relative;overflow:hidden;border-radius:6px;background:#F2F2F2;box-shadow:0 1px 0 rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);flex:none}
+  .stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform:scale(.277777);transform-origin:0 0;font-family:Inter,system-ui,sans-serif;color:#111;overflow:hidden}
+  .stage *{box-sizing:border-box}
+  /* CRT pass: one shared layer over each 1080x1920 frame. The frame content sits in .crtsrc (RGB fringe + bloom via the
+     #crt SVG filter); .crtfx stacks scanlines, grain, vignette and the rounded screen corners on top. body.crt toggles it. */
+  .crtsrc{position:absolute;inset:0}
+  body.crt .crtsrc{filter:url(#crt)}
+  .crtfx{position:absolute;inset:0;pointer-events:none;display:none}
+  body.crt .crtfx{display:block}
+  button#crt{padding:10px 16px;border-radius:8px;border:1px solid #111;background:#fff;font:600 13px Inter;cursor:pointer}
+  body.crt button#crt{background:#111;color:#fff}
+  .veil{position:absolute;inset:0;display:none;pointer-events:none}
+  body.safe .veil{display:block}
+  .veil div{position:absolute;background:rgba(220,40,40,.26)}
+  .veil .box{background:none;border:3px dashed rgba(220,40,40,.8)}
+  .fid{display:flex;align-items:baseline;gap:8px}
+  .fid b{font-size:15px;font-weight:800}
+  .fid span{color:var(--mute);font-size:12px}
+  .fid .beat{margin-left:auto;font-size:11px;color:#999}
+  .words{font-size:13px;font-weight:600;color:#111;min-height:18px}
+  .words.none{color:#999;font-weight:400;font-style:italic}
+  dl{margin:0;display:grid;grid-template-columns:62px 1fr;gap:3px 8px;font-size:11.5px}
+  dt{color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.3px;font-size:10px;padding-top:2px}
+  dd{margin:0;color:#222}
+  .ref{display:flex;gap:16px;flex-wrap:wrap}
+  .ref img{width:100%;max-width:1000px;border-radius:8px;border:1px solid var(--line)}
+  .note{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#333}
+  .note b{font-weight:700}
+  .fbbadge{margin-left:8px;font-size:10px;font-weight:700;color:#fff;background:#C33;border-radius:4px;padding:1px 6px}
+  #assets-status{margin-top:8px;font-size:12px;color:#444}
+  #assets-status code{background:#F2F2F2;padding:1px 5px;border-radius:3px;font-size:11px}
+</style>
+</head>
+<body class="crt">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- CRT pass, light: a soft bloom on whites that never lifts dark ink. No colour fringe (Victor: no blue on the edges). -->
+  <filter id="crt" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" type="matrix" values="3 0 0 0 -2  0 3 0 0 -2  0 0 3 0 -2  0 0 0 1 0" result="hi"/>
+    <feGaussianBlur in="hi" stdDeviation="9" result="bl"/>
+    <feComposite in="bl" in2="SourceGraphic" operator="arithmetic" k1="0.45" k2="0" k3="0" k4="0" result="bloom"/>
+    <feBlend in="SourceGraphic" in2="bloom" mode="screen"/>
+  </filter>
+  <filter id="crtgrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+</defs></svg>
+<header>
+  <div>
+    <h1>JCode explainer storyboard</h1>
+    <p>Style: <b>Paper Studio</b>. Off-white studio ground, white paper cards with soft offset shadows, kinetic grey-to-black captions with bold italic key phrases and black highlight bars, thin black diagram lines with hollow nodes, dark terminal cards on white.</p>
+    <p>Shared hook overlay (all six hook versions, band y 290-440): <b>"How to get a faster coding agent for free"</b></p>
+  </div>
+  <div class="meta">
+    <div><b id="m-run">68.0 s</b>runtime, H1 main</div>
+    <div><b id="m-frames">2,040</b>frames at 30 fps</div>
+    <div><b id="m-shots">62</b>shots in the main version</div>
+    <div><b>45</b>frame cap per shot</div>
+  </div>
+  <button id="safe" onclick="document.body.classList.toggle('safe')">Safe zone veil: off</button>
+  <button id="crtbtn" onclick="document.body.classList.toggle('crt')">CRT: on</button>
+</header>
+
+<section>
+  <div class="note">
+    <b>How to read a frame.</b> Every frame is a real 1080x1920 DOM frame scaled to 300 px wide, so every coordinate written under it is a true reel pixel. Light grey dashed arrows are motion hints (where the element travels during the shot). Faded copies are ghosted start positions. Captions are drawn mid-reveal where that helps: the last landed word is still light grey. Hands, logos, UI pages, terminals and the 3D mocks load from <code>storyboard/assets/</code>; where a file is missing the frame shows a drawn stand-in and a red "fallback" badge next to the shot id. Light comes from the top left for every shadow. Frame ranges are provisional (3.8 words per second) and move once the voice exists. Toggle the safe-zone veil at the top right: red outside x 65-1015, y 269-1248.
+    <div id="assets-status">Assets: checking...</div>
+  </div>
+</section>
+
+<section>
+  <h2>Hooks <small>six openings, each its own world, each hands off into S08 (the GitHub card)</small></h2>
+  <p class="sub">Every hook keeps y 290-440 clear for the shared overlay. Frame ranges below are for that hook version; the body (S08 onward) starts at the hook's last frame + 1.</p>
+  <div class="hooks" id="hooks"></div>
+</section>
+
+<section>
+  <h2>Main version <small>H1 hook + body, in order</small></h2>
+  <p class="sub">Under each frame: shot id, frame range, spoken words, the three motion layers, caption treatment, SFX cue, assets. "Plan" is the beat number in PLAN.md.</p>
+  <div class="grid" id="main"></div>
+</section>
+
+<section>
+  <h2>Reference <small>InsiderForce contact sheets, 1 fps, for the look only</small></h2>
+  <div class="ref">
+    <img src="../reference/sheet1.jpg" alt="reference sheet 1">
+    <img src="../reference/sheet2.jpg" alt="reference sheet 2">
+    <img src="../reference/sheet3.jpg" alt="reference sheet 3">
+  </div>
+</section>
+
+<script>
+/*DATA-START*/
+// ---------- drawing helpers (all coordinates are 1080x1920 reel pixels) ----------
+const PX = (x,y,w,h,st,inner)=>`<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;${st||''}">${inner||''}</div>`;
+const GH = (inner)=>`<div style="position:absolute;inset:0;opacity:.22;filter:grayscale(1)">${inner}</div>`; // ghosted start position
+// real asset with a styled fallback: the img fills its box; if the file is missing the img hides and the fallback shows
+function IMG(src,fb,st='',fst=''){
+  return `<img src="${src}" alt="" style="position:absolute;inset:0;width:100%;height:100%;${st}" onerror="__fb(this)"><div style="display:none;position:absolute;inset:0;${fst}">${fb||''}</div>`;
+}
+const MISSING=new Set();
+window.__fb=function(img){
+  img.style.display='none'; const f=img.nextElementSibling; if(f) f.style.display='block';
+  MISSING.add(img.getAttribute('src'));
+  const s=img.closest('.shot,.hookframe');
+  if(s){ s.dataset.fb=(+s.dataset.fb||0)+1; let b=s.querySelector('.fbbadge'); if(!b){ b=document.createElement('span'); b.className='fbbadge'; (s.querySelector('.fid')||s).appendChild(b); } b.textContent='fallback x'+s.dataset.fb; }
+  clearTimeout(window.__fbT); window.__fbT=setTimeout(()=>{ const el=document.getElementById('assets-status'); if(el) el.innerHTML=`Assets missing (${MISSING.size}): `+[...MISSING].sort().map(m=>`<code>${m}</code>`).join(' '); },200);
+};
+window.addEventListener('load',()=>{ const el=document.getElementById('assets-status'); if(el&&MISSING.size===0) el.textContent='Assets: all files found in storyboard/assets/.'; });
+const LOGO={Cursor:'assets/logos/cursor.svg',Codex:'assets/logos/codex.svg',Claude:'assets/logos/claude.svg',ChatGPT:'assets/logos/chatgpt.svg',GitHub:'assets/logos/github.svg',Rust:'assets/logos/rust.svg',JCode:'assets/logos/jcode.svg'};
+const SHOT={1:'assets/shots/cursor-pricing.png',2:'assets/shots/chatgpt-pricing.png',3:'assets/shots/claude-pricing.png',github:'assets/shots/github-jcode.png',bench:'assets/shots/jcode-bench.png'};
+const TERM_IMG={'jcode':'assets/jcode/demo-1.png','worker':'assets/jcode/demo-2.png','boss':'assets/jcode/swarm.png','helper':'assets/jcode/demo-4.png','jcode  swarm':'assets/jcode/swarm.png'};
+
+function swooshes(){
+  return `<svg style="position:absolute;left:0;top:0" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
+   <path d="M620 -40 C 900 120, 1040 60, 1180 260" stroke="#D3D3D3" stroke-width="54" stroke-linecap="round" opacity=".75" style="filter:blur(2px)"/>
+   <path d="M-120 1500 C 120 1330, 420 1520, 300 1740 S 60 1960, 40 1990" stroke="#D3D3D3" stroke-width="58" stroke-linecap="round" opacity=".7" style="filter:blur(2px)"/>
+  </svg>`;
+}
+function ground(o={}){
+  const bg = o.dark
+    ? 'linear-gradient(180deg,#EDEDED 0%,#E2E2E2 100%)'
+    : 'radial-gradient(ellipse 46% 30% at 50% 46%, #FFFFFF 0%, #F8F8F7 40%, rgba(244,243,242,0) 100%), radial-gradient(ellipse 70% 60% at 50% 50%, #F4F3F2 0%, #EAE8E6 70%, #DCD9D6 100%)';
+  let h = `<div style="position:absolute;inset:0;background:${bg}"></div>`;
+  // one light from the top left: a soft highlight there, a soft vignette toward the edges
+  h += `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 45%),radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 48%,rgba(0,0,0,.075) 100%)"></div>`;
+  // App audit grid (Victor, round 2): solid lines over the whole frame like the ep03 white grid, but fewer and thicker:
+  // 135 px cells (8 across), 3 px lines. Lit off-white hotspot underneath. o.nogrid turns it off.
+  if(!o.nogrid) h += `<svg width="1080" height="1920" style="position:absolute;left:0;top:0"><defs><pattern id="agrid" x="0" y="15" width="135" height="135" patternUnits="userSpaceOnUse"><path d="M0 1.5H135M1.5 0V135" stroke="rgba(78,74,72,0.30)" stroke-width="3" fill="none"/></pattern></defs><rect width="1080" height="1920" fill="url(#agrid)"/></svg>`;
+  if(o.swoosh) h += swooshes();
+  return h;
+}
+function overlay(){
+  return `<div style="position:absolute;left:100px;top:296px;width:880px;height:130px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:56px;font-weight:800;line-height:1.08;letter-spacing:-1px;color:#111">How to get a faster<br>coding agent for free</div>`;
+}
+// caption tokens: {t, s:'reg'|'bi'|'bold'|'big'|'bar'|'huge', g:true (ghost / still landing)}
+function tok(t){
+  const s=t.s||'reg'; let st='';
+  if(s==='reg')  st='font-size:40px;font-weight:400;';
+  if(s==='bi')   st='font-size:64px;font-weight:800;font-style:italic;letter-spacing:-1.5px;';
+  if(s==='bold') st='font-size:56px;font-weight:800;letter-spacing:-1px;';
+  if(s==='big')  st='font-size:96px;font-weight:800;letter-spacing:-3px;';
+  if(s==='huge') st='font-size:128px;font-weight:800;letter-spacing:-4px;';
+  if(s==='bar')  st='font-size:44px;font-weight:700;color:#fff;background:#111;padding:4px 18px 6px;border-radius:4px;';
+  if(t.g) st+='color:#B5B5B5;transform:translate(5px,7px);filter:blur(.7px);';
+  if(t.g && s==='bar') st+='background:#B5B5B5;color:#fff;filter:none;';
+  return `<span style="display:inline-block;line-height:1.12;white-space:nowrap;${st}">${t.t}</span>`;
+}
+function cap(y,lines,o={}){
+  const x=o.x??100, w=o.w??880;
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;color:#111">${lines.map(l=>`<div style="display:flex;justify-content:${o.align||'center'};align-items:baseline;gap:14px;margin:6px 0">${l.map(tok).join('')}</div>`).join('')}</div>`;
+}
+// paper card: a white face with real thickness (hard 3 px and 5 px edges down-right), a two layer soft shadow,
+// and 0-3 sheets stacked behind it stepping right, each with its own edge and shadow. o.tilt adds the slight 3D lean.
+function card(x,y,w,h,inner,o={}){
+  const tf=(o.tilt?'perspective(2200px) rotateY(-6deg) ':'')+(o.tf||'');
+  let out='';
+  for(let i=(o.sheets||0);i>=1;i--){
+    out+=`<div style="position:absolute;left:${x+i*30}px;top:${y+i*10}px;width:${w}px;height:${h-i*6}px;background:#FBFBFB;border-radius:12px;box-shadow:3px 3px 0 #D9D9D9,18px 26px 44px rgba(0,0,0,.12);transform:${tf||'none'};transform-origin:center"></div>`;
+  }
+  out+=`<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:${o.bg||'#fff'};border-radius:12px;box-shadow:3px 3px 0 #DCDCDC,5px 5px 0 #CFCFCF,18px 28px 50px rgba(0,0,0,.18),48px 70px 120px rgba(0,0,0,.10);overflow:hidden;transform:${tf||'none'};transform-origin:center;${o.st||''}">${inner||''}</div>`;
+  return out;
+}
+function label(x,y,w,text,o={}){
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;text-align:center;font-size:${o.fs||34}px;font-weight:${o.fw||500};color:${o.c||'#333'};line-height:1.1;${o.st||''}">${text}</div>`;
+}
+const MARK={Cursor:'Cu',Codex:'Cx',Claude:'Cl',ChatGPT:'GPT',GitHub:'GH',Rust:'Rs',JCode:'J',AI:'AI'};
+// physical button: white disc with a thick rim (about 11% of the diameter), the logo on an inner disc with a faint
+// inner highlight, a soft shadow down-right. Names without a logo file (AI, $0) show their mark letters.
+function disc(name,r,o={}){
+  const rim=Math.round(r*0.22);
+  const inner=o.dark?'#111':o.grey?'#9C9C9C':'#fff'; const col=(o.dark||o.grey)?'#fff':'#111';
+  const mark=`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:${o.fs||r*0.6}px;font-weight:800;letter-spacing:-1px;color:${col}">${MARK[name]||name.slice(0,2)}</span>`;
+  const logo=LOGO[name];
+  const face=(logo&&!o.dark)?IMG(logo,mark,`padding:${Math.round(r*0.34)}px;object-fit:contain;${o.grey?'filter:grayscale(1) invert(1) brightness(1.2);':''}`):mark;
+  return `<div style="position:absolute;left:0;top:0;width:${2*r}px;height:${2*r}px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.05),${Math.round(r*.22)}px ${Math.round(r*.32)}px ${Math.round(r*.6)}px rgba(0,0,0,.20),${Math.round(r*.06)}px ${Math.round(r*.08)}px ${Math.round(r*.12)}px rgba(0,0,0,.10),inset 0 2px 0 #fff,inset 0 -3px 5px rgba(0,0,0,.05)"><div style="position:absolute;inset:${rim}px;border-radius:50%;background:${inner};box-shadow:inset 0 2px 4px rgba(0,0,0,.10),inset 0 -2px 2px rgba(255,255,255,.7);overflow:hidden">${face}</div></div>`;
+}
+function chip(cx,cy,name,o={}){
+  const r=o.r||44;
+  let h=`<div style="position:absolute;left:${cx-r}px;top:${cy-r}px;width:${2*r}px;height:${2*r}px;${o.st||''}">${disc(name,r,o)}</div>`;
+  if(o.label!==false) h+=label(cx-130,cy+r+18,260,name,{fs:o.lfs||36,fw:400,c:'#161616',st:'text-transform:lowercase;letter-spacing:-.3px'});
+  return h;
+}
+function inlineChip(name,o={}){
+  const r=o.r||32;
+  return `<span style="display:inline-block;position:relative;width:${2*r}px;height:${2*r}px;vertical-align:middle;${o.g?'opacity:.3;':''}">${disc(name,r,o)}</span>`;
+}
+// diagram lines and nodes read as raised wire: the whole svg casts a soft shadow down-right. o.flat for motion hints.
+function svg(inner,o={}){
+  const f=o.flat?'':'filter:drop-shadow(8px 12px 6px rgba(0,0,0,.16)) drop-shadow(3px 5px 2px rgba(0,0,0,.08));';
+  return `<svg style="position:absolute;left:0;top:0;overflow:visible;${f}" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none"><defs><marker id="ah" markerWidth="14" markerHeight="14" refX="9" refY="7" orient="auto"><path d="M2 2 L12 7 L2 12 Z" fill="#111"/></marker><marker id="ahg" markerWidth="14" markerHeight="14" refX="9" refY="7" orient="auto"><path d="M2 2 L12 7 L2 12 Z" fill="#9A9A9A"/></marker></defs>${inner}</svg>`;
+}
+const node=(x,y,r=13,sw=r>13?6:4)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#F3F3F3" stroke="#111" stroke-width="${sw}"/>`;
+function path(d,o={}){
+  return `<path d="${d}" stroke="${o.c||'#111'}" stroke-width="${o.w||4}" fill="none" ${o.dash?`stroke-dasharray="${o.dash}"`:''} ${o.arrow?`marker-end="url(#${o.c?'ahg':'ah'})"`:''} stroke-linecap="round" stroke-linejoin="round" ${o.op!=null?`opacity="${o.op}"`:''}/>`;
+}
+const hint=(d)=>svg(path(d,{c:'#9A9A9A',w:3,dash:'12 12',arrow:true,op:.75}),{flat:true});
+function crack(x,y,w,h,seed=7){
+  let r=seed; const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
+  const cx=w/2, cy=h/2, R=Math.max(w,h)*0.62; let d='';
+  const spokes=15;
+  for(let i=0;i<spokes;i++){ const a=i/spokes*Math.PI*2+rnd()*.35; let px=cx,py=cy,dd=`M${cx} ${cy}`,len=0;
+    while(len<R){ const step=34+rnd()*46; len+=step; const ang=a+(rnd()-.5)*.7; px+=Math.cos(ang)*step; py+=Math.sin(ang)*step; dd+=` L${px.toFixed(0)} ${py.toFixed(0)}`; }
+    d+=dd+' '; }
+  for(let k=1;k<=4;k++){ const rr=R*k/5; let dd='';
+    for(let i=0;i<=spokes;i++){ const a=i/spokes*Math.PI*2; const j=(rnd()-.5)*34; const px=cx+Math.cos(a)*(rr+j)*0.9, py=cy+Math.sin(a)*(rr+j)*1.15; dd+=(i?' L':'M')+`${px.toFixed(0)} ${py.toFixed(0)}`; }
+    d+=dd+' Z '; }
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;border-radius:14px"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><path d="${d}" stroke="#fff" stroke-width="10" opacity=".95"/><path d="${d}" stroke="#111" stroke-width="2.5" opacity=".8"/></svg></div>`;
+}
+// UI capture placeholders
+function uiCursor(){
+  return `<div style="padding:30px 36px;font-size:24px;color:#222;line-height:1.3">
+   <div style="color:#888;font-size:22px">&larr; Back</div>
+   <div style="margin-top:20px;font-weight:600;font-size:28px">Subscribe to Cursor Pro</div>
+   <div style="font-size:64px;font-weight:700;letter-spacing:-2px;margin-top:8px">$20 <span style="font-size:22px;color:#777;font-weight:400;letter-spacing:0">per month</span></div>
+   <div style="margin-top:26px;display:flex;gap:16px;align-items:flex-start"><div style="width:52px;height:52px;border-radius:10px;background:#111"></div><div><div style="font-weight:600">Cursor Pro</div><div style="color:#777;font-size:21px">Unlimited tab completions, extended agent limits, access to more features</div></div></div>
+   <div style="border-top:1px solid #E5E5E5;margin-top:26px;padding-top:16px;display:flex;justify-content:space-between"><span>Subtotal</span><span>$20</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:700"><span>Total due today</span><span>$20</span></div>
+   <div style="position:absolute;right:30px;top:30px;width:56px;height:56px;border-radius:12px;background:#111"></div>
+   <div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:20px;color:#999">UI capture: Cursor Pro checkout</div>
+  </div>`;
+}
+function uiChatGPT(){
+  return `<div style="padding:34px 36px;font-size:24px;color:#222;line-height:1.35">
+   <div style="font-size:30px;font-weight:600">Pro</div>
+   <div style="font-size:48px;font-weight:700;letter-spacing:-1.5px;margin-top:6px">ChatGPT plan</div>
+   <div style="margin-top:22px;background:#111;color:#fff;border-radius:40px;padding:14px;text-align:center;font-weight:600">Get Pro</div>
+   <div style="margin-top:26px;color:#444;font-size:22px">Everything in Plus, and:</div>
+   <div style="margin-top:12px;font-size:22px;color:#444;line-height:1.7">&#10003; Unlimited access to the newest model<br>&#10003; Higher usage limits for Codex<br>&#10003; Extended memory and context<br>&#10003; Research preview of new features</div>
+   <div style="position:absolute;right:30px;top:30px;width:56px;height:56px;border-radius:50%;background:#111"></div>
+   <div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:20px;color:#999">UI capture: ChatGPT pricing (Pro)</div>
+  </div>`;
+}
+function uiClaude(){
+  return `<div style="padding:34px 36px;font-size:24px;color:#222;line-height:1.35">
+   <div style="font-size:30px;font-weight:600">Max</div>
+   <div style="color:#666;font-size:22px">Get the most out of Claude</div>
+   <div style="font-size:52px;font-weight:700;letter-spacing:-1.5px;margin-top:14px">From $100</div>
+   <div style="color:#777;font-size:21px">per month</div>
+   <div style="margin-top:22px;background:#111;color:#fff;border-radius:10px;padding:14px;text-align:center;font-weight:600">Try Claude</div>
+   <div style="margin-top:26px;font-size:22px;color:#444;line-height:1.7">Everything in Pro, plus:<br>&#10003; Much more usage than Pro<br>&#10003; Higher output limits for all tasks<br>&#10003; Early access to advanced features<br>&#10003; Priority access at high traffic times</div>
+   <div style="position:absolute;right:30px;top:30px;width:56px;height:56px;border-radius:50%;background:#111"></div>
+   <div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:20px;color:#999">UI capture: Claude pricing (Max)</div>
+  </div>`;
+}
+function uiGithub(w,h){
+  return IMG(SHOT.github,uiGithubFb(w,h),'object-fit:cover;object-position:left top');
+}
+function uiGithubFb(w,h){
+  const rows=['cargo','claude','docs','github','src','tests','Cargo.toml','README.md','LICENSE'];
+  const rh=Math.max(26,(h-170)/rows.length);
+  return `<div style="position:absolute;inset:0;font-size:${Math.round(w/34)}px;color:#222">
+    <div style="height:${Math.round(h*0.14)}px;background:#161B22;display:flex;align-items:center;padding:0 26px;gap:16px;color:#fff;font-weight:600"><span style="width:${Math.round(h*0.07)}px;height:${Math.round(h*0.07)}px;border-radius:50%;background:#fff"></span><span>1jehuang / <b>jcode</b></span><span style="border:1px solid #666;border-radius:20px;padding:2px 10px;font-size:.75em;font-weight:500">Public</span></div>
+    <div style="display:flex;gap:26px;padding:12px 26px;border-bottom:1px solid #E5E5E5;color:#444"><span style="border-bottom:3px solid #F78166;padding-bottom:6px;color:#111;font-weight:600">Code</span><span>Issues</span><span>Pull requests</span><span>Actions</span></div>
+    <div style="padding:6px 26px;color:#555;font-size:.9em">High performance coding agent harness written in Rust</div>
+    ${rows.map(r=>`<div style="display:flex;gap:14px;align-items:center;height:${rh}px;padding:0 26px;border-top:1px solid #F0F0F0"><span style="width:1em;height:.8em;background:#54AEFF;border-radius:2px;opacity:${r.includes('.')?0:1}"></span><span style="width:1em;height:.8em;background:#999;border-radius:2px;opacity:${r.includes('.')?.6:0};margin-left:-1.6em"></span><span>${r}</span></div>`).join('')}
+    <div style="position:absolute;right:18px;bottom:10px;font-size:.8em;color:#999">UI capture: github.com/1jehuang/jcode</div>
+  </div>`;
+}
+const TERM_LINES = [
+ `<span style="color:#7FB7FF">&gt;</span> refactor the auth module and keep the tests green`,
+ ``,
+ `<span style="color:#8F8">&#10003;</span> read   src/auth/session.rs`,
+ `<span style="color:#8F8">&#10003;</span> edit   src/auth/session.rs`,
+ `<span style="color:#8F8">&#10003;</span> run    cargo test`,
+ `  <span style="color:#AAA">all tests passed</span>`,
+ ``,
+ `<span style="color:#F9B46C">memory</span>  noted: prefers small commits`,
+ `<span style="color:#7FB7FF">&gt;</span> <span style="color:#777">&#9608;</span>`
+];
+// terminal: a real JCode screenshot inside a white bezel (about 14 px at reel scale) with rounded corners and a deep soft
+// shadow, like a monitor lying on the paper. o.img picks the capture; otherwise the title picks one from TERM_IMG.
+function terminal(x,y,w,h,o={}){
+  const bar=o.bar===false?0:Math.round(h*0.1);
+  const fs=o.fs||Math.max(18,Math.round(w/36));
+  const lines=(o.lines||TERM_LINES).slice(0,o.n||99).join('\n');
+  const bz=o.bezel??Math.max(7,Math.round(w/58));
+  const img=o.img||TERM_IMG[o.title||'jcode']||TERM_IMG.jcode;
+  const fb=`<div style="position:absolute;left:0;top:0;right:0;height:${bar}px;background:#1A1A1D;border-bottom:1px solid #2A2A2E;display:flex;align-items:center;gap:${bar*0.25}px;padding-left:${bar*0.4}px"><span style="width:${bar*0.3}px;height:${bar*0.3}px;border-radius:50%;background:#FF5F57"></span><span style="width:${bar*0.3}px;height:${bar*0.3}px;border-radius:50%;background:#FEBC2E"></span><span style="width:${bar*0.3}px;height:${bar*0.3}px;border-radius:50%;background:#28C840"></span><span style="margin-left:${bar*0.3}px;color:#8A8A8E;font:500 ${Math.round(bar*0.45)}px ui-monospace,Menlo,monospace">${o.title||'jcode'}</span></div><pre style="position:absolute;left:${fs}px;top:${bar+fs*0.8}px;margin:0;font:400 ${fs}px/1.5 ui-monospace,Menlo,monospace;color:#C9C9CE;white-space:pre">${lines}</pre>${o.tag?`<div style="position:absolute;right:14px;bottom:10px;font-size:${Math.max(16,fs*0.8)}px;color:#666;font-family:Inter">${o.tag}</div>`:''}`;
+  const inner=IMG(img,fb,'object-fit:cover;object-position:left top','background:#0E0E10');
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fff;border-radius:${bz+5}px;box-shadow:0 0 0 1px rgba(0,0,0,.06),14px 24px 40px rgba(0,0,0,.24),40px 60px 110px rgba(0,0,0,.16),inset 0 1px 0 #fff,inset -2px -2px 3px rgba(0,0,0,.06);transform:${o.tf||'none'};transform-origin:center;${o.st||''}"><div style="position:absolute;inset:${bz}px;border-radius:5px;overflow:hidden;background:#0E0E10;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)">${inner}</div></div>`;
+}
+function pill(x,y,text,o={}){
+  return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translateX(-50%);background:${o.light?'#fff':'#111'};color:${o.light?'#111':'#fff'};border:3px solid #111;border-radius:40px;padding:8px 24px;font-size:${o.fs||34}px;font-weight:700;white-space:nowrap;box-shadow:6px 10px 18px rgba(0,0,0,.16);${o.mono?'font-family:ui-monospace,Menlo,monospace;':''}${o.st||''}">${text}</div>`;
+}
+// photo cut-out: the transparent PNG with a thin white outline (two tight white drop-shadows) and a soft cast shadow
+// down-right, plus a blurred contact shadow on the ground. The fallback is the old grey silhouette with the same treatment.
+function hand(kind,x,y,w,h,o={}){
+  const fill=kind==='human'?'#CFCFCF':'#8C8C8C';
+  const flip=kind==='robot'?`transform="translate(400,440) scale(-1,-1)"`:'';
+  let g=`<svg style="position:absolute;left:0;top:0" width="${w}" height="${h}" viewBox="0 0 400 440" preserveAspectRatio="none"><g ${flip}>`;
+  g+=`<path d="M40 440 L40 250 Q40 180 110 150 L300 50 Q335 32 352 62 Q364 92 336 112 L246 170 L336 168 Q378 168 378 206 Q378 238 340 244 L250 250 L324 262 Q362 270 356 306 Q350 332 312 332 L240 326 L292 346 Q324 360 312 392 Q300 414 262 408 L150 380 L150 440 Z" fill="${fill}"/>`;
+  if(kind==='robot') g+=`<path d="M110 150 L150 380 M246 170 L250 250 M250 250 L240 326 M40 300 L150 300 M336 168 L378 206 M324 262 L356 306" stroke="#F2F2F2" stroke-width="7"/>`;
+  g+=`</g></svg>`;
+  const lab=o.label===false?'':`<div style="position:absolute;left:0;top:${h+14}px;width:${w}px;text-align:center;font-size:28px;color:#8A8A8A;white-space:nowrap">photo cut-out: ${kind} hand</div>`;
+  // Reference shadow: the cut-out floats a little above the paper, so its own silhouette falls down-right as a wide soft
+  // shadow (no blob under it), plus a tight contact shadow; a hairline white edge keeps the cut-out look.
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(10px 14px 8px rgba(0,0,0,.14)) drop-shadow(34px 52px 30px rgba(0,0,0,.24))">${IMG(`assets/photos/hand-${kind}.png`,g+lab,'object-fit:contain')}</div>`;
+}
+// heavy grey block (S18-S19): the logo in a grey treatment on a thick slab with a hard edge and a deep shadow
+function heavyBlock(n,cx,top,rot=0){
+  const mark=`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:44px">${MARK[n]}</span>`;
+  return `<div style="position:absolute;left:${cx-60}px;top:${top}px;width:120px;height:120px;border-radius:22px;background:linear-gradient(160deg,#ABABAB,#8A8A8A);box-shadow:3px 3px 0 #6F6F6F,12px 18px 28px rgba(0,0,0,.26),inset 0 2px 0 rgba(255,255,255,.5);transform:rotate(${rot}deg);overflow:hidden">${LOGO[n]?IMG(LOGO[n],mark,'padding:28px;object-fit:contain;filter:grayscale(1) invert(1) brightness(1.2);opacity:.92'):mark}</div>`;
+}
+function icon(kind,x,y,s=48){
+  const k={
+    prompt:`<rect x="4" y="8" width="40" height="28" rx="8" fill="#111"/><path d="M14 36 L14 44 L24 36" fill="#111"/><rect x="21" y="16" width="6" height="12" fill="#fff"/><rect x="18" y="19" width="12" height="6" fill="#fff"/>`,
+    tools:`<path d="M8 40 L26 22 M26 22 L34 14 A8 8 0 1 1 38 18 L30 26" stroke="#111" stroke-width="7" stroke-linecap="round"/><rect x="4" y="34" width="12" height="12" rx="3" transform="rotate(-45 10 40)" fill="#111"/>`,
+    memory:`<path d="M24 6 C10 6 6 16 8 24 C4 30 8 40 18 40 L20 46 L30 46 L30 40 C40 40 44 30 40 24 C42 16 38 6 24 6 Z" fill="#111"/><path d="M18 20 L30 20 M18 28 L28 28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>`,
+    sessions:`<rect x="4" y="6" width="24" height="18" rx="4" fill="#111"/><rect x="14" y="16" width="24" height="18" rx="4" fill="#fff" stroke="#111" stroke-width="4"/><rect x="24" y="26" width="20" height="16" rx="4" fill="#111"/>`,
+    folder:`<path d="M4 12 L18 12 L22 18 L44 18 L44 40 L4 40 Z" fill="#111"/>`
+  }[kind];
+  return `<svg style="position:absolute;left:${x}px;top:${y}px" width="${s}" height="${s}" viewBox="0 0 48 48">${k}</svg>`;
+}
+function iconRow(x,y,kind,text,o={}){
+  return icon(kind,x,y+2,48)+`<div style="position:absolute;left:${x+72}px;top:${y}px;font-size:44px;font-weight:700;line-height:1.1;color:${o.g?'#B5B5B5':'#111'}">${text}</div>`;
+}
+function sparkleRow(x,y,tokens){
+  return `<svg style="position:absolute;left:${x}px;top:${y+4}px" width="44" height="44" viewBox="0 0 44 44"><path d="M22 0 C24 14 30 20 44 22 C30 24 24 30 22 44 C20 30 14 24 0 22 C14 20 20 14 22 0 Z" fill="#111"/></svg>`+
+   `<div style="position:absolute;left:${x+68}px;top:${y}px;display:flex;gap:14px;align-items:baseline">${tokens.map(tok).join('')}</div>`;
+}
+function statRow(y,num,lab,chipName,o={}){
+  return `<div style="position:absolute;left:140px;top:${y}px;width:820px;display:flex;align-items:center;gap:26px"><span style="font-size:72px;font-weight:800;letter-spacing:-2px;min-width:170px;${o.gn?'color:#B5B5B5;':''}">${num}</span><span style="font-size:40px;font-weight:700;line-height:1.05;${o.gl?'color:#B5B5B5;':''}">${lab}</span>${chipName?inlineChip(chipName,{g:o.gc}):''}</div>`;
+}
+// glossy 3D object on a contact shadow; the fallback is the old grey tile
+function harnessIcon(cx,cy,s=110){
+  const fb=`<div style="position:absolute;inset:0;border-radius:${s*0.22}px;background:linear-gradient(145deg,#E9E9E9,#BDBDBD);box-shadow:inset 0 2px 0 #fff;display:grid;grid-template-columns:1fr 1fr;gap:${s*0.08}px;padding:${s*0.2}px"><i style="background:#fff;border-radius:${s*0.08}px"></i><i style="background:#fff;border-radius:${s*0.08}px"></i><i style="background:#fff;border-radius:${s*0.08}px"></i><i style="background:#fff;border-radius:${s*0.08}px"></i></div>`+label(s/2-160,s+10,320,'3D icon: harness',{fs:26,c:'#9A9A9A'});
+  return `<div style="position:absolute;left:${cx-s*0.45}px;top:${cy+s*0.42}px;width:${s*0.9}px;height:${s*0.24}px;border-radius:50%;background:rgba(0,0,0,.22);filter:blur(10px)"></div>`+
+    `<div style="position:absolute;left:${cx-s/2}px;top:${cy-s/2}px;width:${s}px;height:${s}px;filter:drop-shadow(10px 16px 14px rgba(0,0,0,.22))">${IMG('assets/photos/harness-icon.png',fb,'object-fit:contain')}</div>`;
+}
+// 3D guide mock: the rendered page/book cut-out on a wide contact shadow; the fallback is the old tilted paper card
+function guideMock(x,y,w,h,o={}){
+  const inner=`<div style="padding:36px 40px;font-size:30px;color:#222"><div style="font-size:40px;font-weight:800;letter-spacing:-1px">JCode setup</div><div style="color:#777;font-size:24px;margin:4px 0 22px">the exact steps</div>
+   ${['Install in one line','Sign in with your Claude or ChatGPT plan','Turn on swarm mode','Run a boss agent with helpers','Where the memory files live'].map(t=>`<div style="display:flex;gap:16px;align-items:center;margin:12px 0"><span style="width:26px;height:26px;border-radius:50%;border:3px solid #111;flex:none"></span><span style="${o.g?'color:#B5B5B5':''}">${t}</span></div>`).join('')}
+   <div style="position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#999;font-size:22px">3D mock: guide page (image tool)</div></div>`;
+  const fb=card(0,0,w,h,inner,{tf:o.tf||'perspective(1800px) rotateX(52deg) rotateZ(-12deg)',sheets:o.sheets??1});
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px"><div style="position:absolute;left:${w*0.04}px;top:${h*0.74}px;width:${w*0.92}px;height:${h*0.3}px;border-radius:50%;background:rgba(0,0,0,.2);filter:blur(22px)"></div>${IMG('assets/photos/guide-mock.png',fb,`object-fit:contain;filter:drop-shadow(18px 26px 22px rgba(0,0,0,.22));${o.rot?`transform:rotate(${o.rot}deg);`:''}`)}</div>`;
+}
+// CRT pass overlay (shared by every frame, ep03 MildCRT values): fine 1 px scanlines every 6 px at 3% (no colour triad, no fringe), grain at 8% soft-light, a 12% vignette and
+// softly rounded screen corners (r 34). Fringe and bloom come from the #crt filter on .crtsrc. No curvature, tint or flicker.
+function crt(){
+  return `<div class="crtfx">`+
+    `<div style="position:absolute;inset:0;mix-blend-mode:multiply;background:repeating-linear-gradient(0deg,rgba(16,25,35,.03) 0 1px,transparent 2px 6px)"></div>`+
+    `<svg style="position:absolute;left:0;top:0;opacity:.08;mix-blend-mode:soft-light" width="1080" height="1920"><rect width="1080" height="1920" filter="url(#crtgrain)"/></svg>`+
+    `<div style="position:absolute;inset:0;border-radius:34px;box-shadow:inset 0 0 150px rgba(0,0,0,.12),0 0 0 80px #111"></div>`+
+  `</div>`;
+}
+function veil(){
+  return `<div class="veil"><div style="left:0;top:0;width:1080px;height:269px"></div><div style="left:0;top:1248px;width:1080px;height:672px"></div><div style="left:0;top:269px;width:65px;height:979px"></div><div style="left:1015px;top:269px;width:65px;height:979px"></div><div class="box" style="left:65px;top:269px;width:950px;height:979px"></div></div>`;
+}
+function blurOf(html){
+  return `<div style="position:absolute;inset:0;filter:blur(16px);transform:scale(1.03)">${html}</div><div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,.22) 100%)"></div>`;
+}
+
+// ---------- shared compositions ----------
+const CARD={x:300,y:660,w:480,h:520};
+const hookChips=(n,o={})=>{
+  let h=svg(path(`M-40 540 L${[260,460,660][n-1]} 540`));
+  const names=['Cursor','Codex','Claude'];
+  for(let i=0;i<n;i++) h+=chip(200+i*200,540,names[i],o);
+  return h;
+};
+function hookCaps(stage){ // stage 1..4 cumulative lines of the H1 caption block
+  const L=[];
+  L.push([{t:'one developer built something'},{t:'that',g:stage===1}]);
+  if(stage>=2) L.push([{t:'beats all of',s:'bi'},{t:'them',s:'bi',g:stage===2}]);
+  if(stage>=3) L.push([{t:'and made'},{t:'it',g:stage===3}]);
+  if(stage>=4) L.push([{t:'free & open source',s:'bar'}]);
+  const top=[1090,1030,970,900][stage-1];
+  return cap(top,L);
+}
+function handsScene(o={}){ // o.dy shift, o.drift; reference layout: big cut-outs entering from the frame edges, fingertips almost touching
+  const dy=o.dy||0, d=o.drift||0;
+  // cropped cut-outs: human 1490x1310, robot 1592x1308. Arms bleed off the left and right edges like the reference.
+  let h=hand('human',-180+d,380+dy,700,615,{label:o.labels===true})+hand('robot',600-d,340+dy,748,615,{label:o.labels===true});
+  if(o.bracket){
+    const op=o.bracket==='draw'?.5:1;
+    h+=svg(path(`M470 ${330+dy} L560 ${330+dy} L560 ${900+dy} L650 ${900+dy}`,{op,w:7})+node(470,330+dy,15)+node(650,900+dy,15));
+  }
+  return h;
+}
+function stackCard(n,stage,o={}){ // n = which card on top (1 cursor, 2 chatgpt, 3 claude); real page capture with the drawn page as fallback
+  const inner=IMG(SHOT[n],[uiCursor,uiChatGPT,uiClaude][n-1](),'object-fit:cover;object-position:top');
+  return card(CARD.x,CARD.y+(o.dy||0),CARD.w,CARD.h,inner,{sheets:o.sheets??(n-1),tf:o.tf,st:o.st,tilt:o.tilt??true});
+}
+function swarmCards(o={}){ // 3D tilted cards for S43-S48
+  const dim=o.dim||[];
+  let h='';
+  const pos=[[160,520],[220,470],[280,420]];
+  for(let i=2;i>=0;i--){
+    const [x,y]=pos[i];
+    h+=terminal(x,y,600,330,{tf:'perspective(1600px) rotateY(-22deg)',fs:20,n:7,title:['worker','worker','boss'][i],st:dim.includes(i)?'opacity:.35;':''});
+  }
+  return h;
+}
+function freeCard(o={}){
+  const inner=`<div style="padding:36px 40px;font-size:26px;color:#222;line-height:1.3"><div style="display:flex;align-items:center;gap:18px">${inlineChip('JCode',{r:30})}<span style="font-size:34px;font-weight:700">JCode</span></div>
+    <div style="font-size:112px;font-weight:800;letter-spacing:-5px;margin-top:10px;line-height:1">$0</div><div style="color:#777;font-size:24px">per month</div>
+    <div style="display:inline-block;margin-top:16px;border:3px solid #111;border-radius:30px;padding:6px 20px;font-weight:700;font-size:26px">MIT license</div>
+    ${o.slots?`<div style="margin-top:28px;color:#777;font-size:24px">Sign in with</div><div style="display:flex;gap:18px;margin-top:10px">${[o.s1,o.s2].map((s,i)=>`<div style="flex:1;height:96px;border:3px dashed ${s?'#111':'#BDBDBD'};border-radius:14px;display:flex;align-items:center;justify-content:center;gap:12px;font-weight:700;font-size:26px;${s?'border-style:solid;':''}">${s?inlineChip(s,{r:30})+s+(i?' plan':' plan'):''}</div>`).join('')}</div>`:''}
+  </div>`;
+  return card(290,420,500,o.slots?560:460,inner,{sheets:1,tilt:true});
+}
+
+// ---------- hook versions ----------
+const HOOKS=[
+ {id:'H1',title:'Original hook (theirs, kept close)',line:'Cursor has a price tag. Codex has a price tag. Claude Code has a price tag. One developer built something that beats all of them and made it free and open source.',note:'Drawn in full as S01-S07 of the main version below.',shots:[
+   {k:'S01',d:40,words:'Cursor has a price tag.'},{k:'S02',d:40,words:'Codex has a price tag.'},{k:'S03',d:45,words:'Claude Code has a price tag.'},{k:'S04',d:40,words:'One developer built something that'},{k:'S05',d:32,words:'beats all of them'},{k:'S06',d:24,words:'and made it'},{k:'S07',d:42,words:'free and open source.'}],
+  frames:[]},
+ {id:'H2',title:'Speed proof',line:'Codex takes almost a full second to load. This free coding agent shows up in fourteen milliseconds.',
+  shots:[
+   {k:'H2.1',d:24,words:'Codex takes almost',motion:'Two stopwatch cards rise from y +60 into place (Codex left, JCode right); the Codex hand starts sweeping. Secondary: Codex chip pops on the left card. Ambient: both cards drift 3 px.',cap:'"Codex takes almost" regular 40, last word grey.',place:'Codex card x 110-520 y 520-1000; JCode card x 560-970 y 520-1000; caption y 1080.',sfx:'whoosh-soft, pop',assets:'Codex logo, JCode mark',key:true},
+   {k:'H2.2',d:40,words:'a full second to load.',motion:'Codex hand sweeps to almost a full turn, readout ticks up to 883 ms and lands. Secondary: the JCode card dims 20%. Ambient: Codex card push-in 1.02.',cap:'"a full second" bold italic 64, "to load" regular 40.',place:'same; readout inside the Codex card at y 860.',sfx:'tick',assets:'none new',key:true},
+   {k:'H2.3',d:32,words:'This free coding agent',motion:'JCode card lifts forward (scale 1.06) and brightens, Codex card settles back and greys. Secondary: JCode chip pops. Ambient: shadows grow with the lift.',cap:'"this free coding agent" regular 40.',place:'JCode card x 540-990 y 500-1010 after the lift.',sfx:'whoosh-soft, pop',assets:'none new'},
+   {k:'H2.4',d:40,words:'shows up in fourteen milliseconds.',motion:'JCode hand snaps to 14 ms in 3 frames, readout stamps. Secondary: Codex card slides left out of frame. Hand-off: in the last 8 frames the JCode card shrinks toward centre (scale to 0.3) so S08 grows from the same point.',cap:'"shows up in" regular, "fourteen milliseconds" bold italic 64.',place:'caption y 1080-1200.',sfx:'pop, whoosh-soft',assets:'none new',key:true}],
+  frames:[1,2,4]},
+ {id:'H3',title:'Memory proof',line:'This free coding agent runs on twenty times less memory than Claude Code.',
+  shots:[
+   {k:'H3.1',d:45,words:'This free coding agent runs on',motion:'One wide paper card rises; inside, the Claude Code RAM bar fills left to right to 212.7 MB over 30 frames. Secondary: JCode row label appears, bar empty. Ambient: card tilt rotateX 2 deg easing to 0.',cap:'"this free coding agent runs on" regular 40, last word grey.',place:'card x 150-930 y 500-960; caption y 1040.',sfx:'whoosh-soft, tick',assets:'Claude logo, JCode mark',key:true},
+   {k:'H3.2',d:32,words:'twenty times less memory',motion:'JCode bar fills to 10.4 MB in 6 frames and stops short; "20x" lands at the right of the card. Secondary: Claude bar dims. Ambient: card drift 3 px up.',cap:'"twenty times less memory" bold italic 64.',place:'20x at x 760-900 y 700.',sfx:'pop',assets:'none new',key:true},
+   {k:'H3.3',d:30,words:'than Claude Code.',motion:'Claude chip pops at the end of the caption line. Hand-off: card collapses toward centre (scale to 0.3, fade) over the last 8 frames into the S08 GitHub card.',cap:'"than" regular + Claude chip inline + "Claude Code" bold.',place:'caption y 1040-1160.',sfx:'pop, whoosh-soft',assets:'none new',key:true}],
+  frames:[1,2,3]},
+ {id:'H4',title:'Hidden layer',line:'Every coding agent you pay for has a hidden layer, and one developer just rebuilt it from scratch for free.',
+  shots:[
+   {k:'H4.1',d:45,words:'Every coding agent you pay for',motion:'A white editor card (paid agents, three chips in its top bar) slides up into place; its top-right corner starts to curl. Secondary: the three chips pop in sequence. Ambient: card push-in 1.02.',cap:'"every coding agent you pay for" regular 40.',place:'editor card x 140-940 y 500-1040; caption y 1100.',sfx:'whoosh-soft, pop',assets:'Cursor, Codex, Claude logos',key:true},
+   {k:'H4.2',d:32,words:'has a hidden layer,',motion:'Peel: the card lifts from the corner like paper (diagonal clip travels across) and shows a dark layer underneath with hollow nodes and a line diagram. Secondary: the four node labels fade in. Ambient: shadow of the curled sheet moves with it.',cap:'"has a" regular, "hidden layer" bold italic 64.',place:'dark layer same rect as the card.',sfx:'swipe',assets:'none new',key:true},
+   {k:'H4.3',d:45,words:'and one developer just rebuilt it',motion:'The curled white sheet slides off right and out. Secondary: the nodes reconnect in a tighter, cleaner pattern (lines redraw). Ambient: dark layer drift 4 px.',cap:'"and one developer just rebuilt it" regular 40.',place:'caption y 1100-1160.',sfx:'whoosh-soft',assets:'none new'},
+   {k:'H4.4',d:38,words:'from scratch for free.',motion:'Rust chip pops at the end of the line, black bar wipes "for free". Hand-off: the dark layer shrinks toward centre and fades into the S08 GitHub card.',cap:'"from scratch" bold 56, "for free" black bar.',place:'caption y 1100-1220.',sfx:'pop, swipe',assets:'Rust logo',key:true}],
+  frames:[1,2,4]},
+ {id:'H5',title:'Same model, better results',line:'The same AI can get better or worse at coding depending on one part most people never think about.',
+  shots:[
+   {k:'H5.1',d:40,words:'The same AI can get',motion:'One model chip pops at top centre; two connector lines draw down to two harness cards (left and right). Secondary: the cards rise into place. Ambient: lines wobble 2 px while drawing.',cap:'"the same AI can get" regular 40.',place:'chip (540,540) r 60; cards x 120-480 and x 600-960, y 700-960; caption y 1080.',sfx:'pop, whoosh-soft',assets:'none (generic AI chip)',key:true},
+   {k:'H5.2',d:40,words:'better or worse at coding',motion:'Two gauge dials under the cards: left needle swings up, right needle swings down, with arrows. Secondary: left card brightens, right card dims. Ambient: cards drift 3 px apart.',cap:'"better or worse" bold italic 64, "at coding" regular.',place:'gauges y 980-1060 under each card.',sfx:'tick',assets:'none new',key:true},
+   {k:'H5.3',d:33,words:'depending on one part',motion:'The two cards slide together into one centred card. Secondary: a dashed loop arrow draws around it. Ambient: chip drift.',cap:'"depending on" regular, "one part" bold italic.',place:'centre card x 340-740 y 700-960.',sfx:'whoosh-soft',assets:'none new'},
+   {k:'H5.4',d:45,words:'most people never think about.',motion:'Hollow nodes pop on the card corners; black bar wipes "never think about". Hand-off: the card shrinks toward centre into the S08 GitHub card.',cap:'"most people" regular, "never think about" black bar.',place:'caption y 1080-1200.',sfx:'pop, swipe',assets:'none new',key:true}],
+  frames:[1,2,4]},
+ {id:'H6',title:'AI that hires a team',line:'One AI agent can now bring in its own team of coders, and the tool behind it costs nothing.',
+  shots:[
+   {k:'H6.1',d:24,words:'One AI agent',motion:'A single dark terminal card drops into the centre with a soft bounce. Secondary: a "boss" pill pops above it. Ambient: card drift 3 px.',cap:'"one AI agent" regular 40, last word grey.',place:'card x 340-740 y 520-790; caption y 1100.',sfx:'whoosh-soft, pop',assets:'JCode terminal capture',key:true},
+   {k:'H6.2',d:32,words:'can now bring in',motion:'Dashed connectors draw out from the card bottom to four empty hollow nodes. Secondary: caption continues. Ambient: card push-in 1.02.',cap:'"can now bring in" regular 40.',place:'nodes at y 900, x 160 / 420 / 660 / 920.',sfx:'whoosh-soft',assets:'none new'},
+   {k:'H6.3',d:40,words:'its own team of coders,',motion:'Four small terminal cards pop onto the nodes one per 6 frames. Secondary: "worker" pills. Ambient: all cards drift.',cap:'"its own" regular, "team of coders" bold italic 64.',place:'worker cards 200x130 centred on the nodes, y 880-1010; caption y 1080.',sfx:'pop (x4, quick)',assets:'none new',key:true},
+   {k:'H6.4',d:40,words:'and the tool behind it',motion:'The team collapses back into the boss card (cards fly in). Secondary: connectors retract. Ambient: card scale 1.03.',cap:'"and the tool behind it" regular 40.',place:'caption y 1080.',sfx:'whoosh-soft',assets:'none new'},
+   {k:'H6.5',d:26,words:'costs nothing.',motion:'A "$0" chip pops at the card corner, black bar wipes "costs nothing". Hand-off: the card shrinks toward centre into the S08 GitHub card.',cap:'"costs nothing" black bar.',place:'$0 chip at (740,520) r 56; caption y 1100.',sfx:'pop, swipe',assets:'none new',key:true}],
+  frames:[1,3,5]}
+];
+
+// hook frame renderers (by shot key)
+const HOOK_RENDER={
+ 'H2.1':()=>ground()+overlay()+stopwatchCard(110,'Codex',120,'883 ms',true)+stopwatchCard(560,'JCode',0,'',true)+cap(1080,[[{t:'Codex takes'},{t:'almost',g:true}]])+hint('M315 1100 L315 1020')+hint('M765 1100 L765 1020'),
+ 'H2.2':()=>ground()+overlay()+stopwatchCard(110,'Codex',330,'883 ms',false)+stopwatchCard(560,'JCode',0,'',true,.75)+cap(1080,[[{t:'Codex takes almost'}],[{t:'a full second',s:'bi'},{t:'to load',g:true}]]),
+ 'H2.4':()=>ground()+overlay()+GH(stopwatchCard(110,'Codex',330,'883 ms',false))+stopwatchCard(540,'JCode',14,'14 ms',false,1,1.06)+cap(1060,[[{t:'this free coding agent'}],[{t:'shows up in'},{t:'fourteen milliseconds',s:'bi'}]])+hint('M310 760 L120 760'),
+ 'H3.1':()=>ground()+overlay()+ramCard(0.98,0,true)+cap(1040,[[{t:'this free coding agent runs'},{t:'on',g:true}]]),
+ 'H3.2':()=>ground()+overlay()+ramCard(1,1,false)+cap(1040,[[{t:'this free coding agent runs on'}],[{t:'twenty times less memory',s:'bi'}]]),
+ 'H3.3':()=>ground()+overlay()+ramCard(1,1,false)+cap(1040,[[{t:'this free coding agent runs on'}],[{t:'twenty times less memory',s:'bi'}],[{t:'than'},{t:inlineChip('Claude')+' Claude Code',s:'bold'}]])+hint('M540 980 L540 900'),
+ 'H4.1':()=>ground()+overlay()+editorCard(0)+cap(1100,[[{t:'every coding agent you pay'},{t:'for',g:true}]]),
+ 'H4.2':()=>ground()+overlay()+editorCard(1)+cap(1100,[[{t:'every coding agent you pay for'}],[{t:'has a'},{t:'hidden layer',s:'bi'}]]),
+ 'H4.4':()=>ground()+overlay()+editorCard(2)+cap(1080,[[{t:'and one developer just rebuilt it'}],[{t:'from scratch',s:'bold'},{t:inlineChip('Rust'),s:'reg'},{t:'for free',s:'bar'}]]),
+ 'H5.1':()=>ground()+overlay()+modelDiagram(0)+cap(1080,[[{t:'the same AI can'},{t:'get',g:true}]]),
+ 'H5.2':()=>ground()+overlay()+modelDiagram(1)+cap(1100,[[{t:'the same AI can get'}],[{t:'better or worse',s:'bi'},{t:'at coding',g:true}]]),
+ 'H5.4':()=>ground()+overlay()+modelDiagram(2)+cap(1080,[[{t:'depending on'},{t:'one part',s:'bi'}],[{t:'most people'},{t:'never think about',s:'bar'}]]),
+ 'H6.1':()=>ground()+overlay()+terminal(340,520,400,270,{fs:16,n:6,title:'jcode'})+pill(540,436,'boss')+cap(1100,[[{t:'one AI'},{t:'agent',g:true}]])+hint('M540 440 L540 500')+GH(terminal(340,420,400,270,{fs:16,n:6})),
+ 'H6.3':()=>ground()+overlay()+teamDiagram(true)+cap(1080,[[{t:'its own'},{t:'team of coders',s:'bi'}]]),
+ 'H6.5':()=>ground()+overlay()+terminal(340,520,400,270,{fs:16,n:6,title:'jcode'})+pill(540,436,'boss')+chip(740,520,'$0',{r:56,label:false,fs:40,dark:true})+cap(1060,[[{t:'and the tool behind it'}],[{t:'costs nothing',s:'bar'}]])+hint('M700 840 L580 760'),
+};
+function stopwatchCard(x,name,deg,readout,ghostRead,op=1,sc=1){
+  const face=`<div style="position:absolute;left:75px;top:96px;width:260px;height:260px;border-radius:50%;border:8px solid #111;background:#fff"></div>
+   <svg style="position:absolute;left:75px;top:96px" width="260" height="260" viewBox="0 0 300 300">${Array.from({length:12},(_,i)=>`<line x1="150" y1="22" x2="150" y2="${i%3?34:46}" stroke="#111" stroke-width="${i%3?3:6}" transform="rotate(${i*30} 150 150)"/>`).join('')}<line x1="150" y1="150" x2="150" y2="40" stroke="#111" stroke-width="8" stroke-linecap="round" transform="rotate(${deg} 150 150)"/><circle cx="150" cy="150" r="10" fill="#111"/></svg>
+   <div style="position:absolute;left:170px;top:70px;width:70px;height:26px;border-radius:8px 8px 0 0;background:#111"></div>`;
+  const inner=`${face}<div style="position:absolute;left:0;right:0;top:36px;text-align:center;font-size:30px;font-weight:700">${name}</div><div style="position:absolute;left:0;right:0;top:860px"></div><div style="position:absolute;left:0;right:0;top:380px;text-align:center;font-size:64px;font-weight:800;letter-spacing:-2px;color:${ghostRead?'#C9C9C9':'#111'}">${readout||'&nbsp;'}</div>`;
+  return card(x,520,410,480,inner,{sheets:1,st:`opacity:${op};`,tf:`scale(${sc})`,tilt:true})+chip(x+205,520,name,{r:40,label:false,st:'z-index:2'});
+}
+function ramCard(sc,stage,ghostTop){
+  const row=(y,name,w,txt,g)=>`${inlineChip(name,{r:30}).replace('position:','position:')}`;
+  const inner=`<div style="position:absolute;left:40px;top:34px;font-size:26px;color:#777">RAM per extra session</div>
+   <div style="position:absolute;left:40px;top:120px;display:flex;align-items:center;gap:20px">${inlineChip('Claude',{r:30})}<div style="width:560px;height:44px;border-radius:10px;background:#EDEDED;overflow:hidden"><div style="width:${ghostTop?'86%':'100%'};height:100%;background:${stage?'#9A9A9A':'#111'}"></div></div><span style="font-size:30px;font-weight:700;white-space:nowrap;color:${ghostTop?'#B5B5B5':'#111'}">212.7 MB</span></div>
+   <div style="position:absolute;left:40px;top:220px;display:flex;align-items:center;gap:20px">${inlineChip('JCode',{r:30})}<div style="width:560px;height:44px;border-radius:10px;background:#EDEDED;overflow:hidden"><div style="width:${stage?'5%':'0%'};height:100%;background:#111"></div></div><span style="font-size:30px;font-weight:700;white-space:nowrap;color:${stage?'#111':'#C9C9C9'}">10.4 MB</span></div>
+   ${stage?`<div style="position:absolute;right:50px;top:300px;font-size:120px;font-weight:800;letter-spacing:-5px;line-height:1">20x</div>`:''}`;
+  return card(150,500,780,460,inner,{sheets:1,tf:`scale(${sc})`,tilt:true});
+}
+function editorCard(stage){
+  const editor=`<div style="position:absolute;inset:0"><div style="height:70px;background:#F3F3F3;border-bottom:1px solid #E3E3E3;display:flex;align-items:center;gap:18px;padding:0 24px">${['Cursor','Codex','Claude'].map(n=>inlineChip(n,{r:22})).join('')}<span style="margin-left:auto;color:#999;font-size:24px">paid coding agent</span></div><div style="position:absolute;left:0;top:70px;bottom:0;width:180px;background:#F8F8F8;border-right:1px solid #E6E6E6"></div><pre style="position:absolute;left:210px;top:96px;margin:0;font:400 22px/1.6 ui-monospace,Menlo,monospace;color:#444">fn main() {\n    let app = App::new();\n    app.run();\n}\n\n// what you see</pre></div>`;
+  const hidden=`<div style="position:absolute;inset:0;background:#0E0E10"></div><svg style="position:absolute;left:0;top:0" width="800" height="540" viewBox="0 0 800 540" fill="none"><path d="M120 120 L400 120 L400 270 L680 270 M400 270 L400 420 L120 420 M400 120 L400 60" stroke="#fff" stroke-width="4"/>${[[120,120],[400,120],[680,270],[120,420],[400,420],[400,60]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="13" fill="#0E0E10" stroke="#fff" stroke-width="4"/>`).join('')}<text x="130" y="100" fill="#DADADA" font-family="Inter" font-size="28">prompts</text><text x="690" y="250" fill="#DADADA" font-family="Inter" font-size="28">tools</text><text x="130" y="460" fill="#DADADA" font-family="Inter" font-size="28">memory</text><text x="410" y="460" fill="#DADADA" font-family="Inter" font-size="28">sessions</text></svg>${stage===2?`<div style="position:absolute;right:24px;bottom:18px;color:#8A8A8A;font-size:24px;font-family:Inter">rebuilt in Rust</div>`:''}`;
+  let h='';
+  if(stage===0){ h+=card(140,500,800,540,editor); h+=`<div style="position:absolute;left:800px;top:500px;width:140px;height:140px;background:linear-gradient(225deg,transparent 50%,#fff 50%,#E8E8E8 100%);border-radius:0 14px 0 0;box-shadow:-8px 8px 18px rgba(0,0,0,.15);clip-path:polygon(0 0,100% 0,100% 100%)"></div>`; h+=hint('M880 560 L700 740'); }
+  if(stage===1){ h+=card(140,500,800,540,hidden); h+=`<div style="position:absolute;left:140px;top:500px;width:800px;height:540px;clip-path:polygon(0 0,45% 0,0 45%)">${card(0,0,800,540,editor)}</div>`; h+=`<div style="position:absolute;left:190px;top:550px;width:560px;height:560px;background:linear-gradient(135deg,#fff,#E5E5E5);transform:rotate(45deg);transform-origin:0 0;clip-path:polygon(0 0,100% 0,0 100%);box-shadow:-10px 10px 22px rgba(0,0,0,.18);opacity:.95"></div>`; }
+  if(stage===2){ h+=card(140,500,800,540,hidden); h+=GH(`<div style="position:absolute;left:980px;top:560px;width:300px;height:420px;background:#fff;border-radius:14px;transform:rotate(12deg)"></div>`); }
+  return h;
+}
+function modelDiagram(stage){
+  let h=chip(540,540,'AI',{r:60,label:false,fs:40});
+  if(stage<2){
+    h+=svg(path('M520 600 L300 700')+path('M560 600 L780 700')+node(300,700)+node(780,700));
+    h+=card(120,700,360,260,`<div style="position:absolute;inset:0;background:#0E0E10;color:#DADADA;font-size:26px;padding:24px">harness A<div style="margin-top:12px;color:#777;font:20px ui-monospace,Menlo,monospace">prompts<br>tools<br>memory</div></div>`,{st:stage===1?'':'',tf:'none'});
+    h+=card(600,700,360,260,`<div style="position:absolute;inset:0;background:#0E0E10;color:#DADADA;font-size:26px;padding:24px">harness B<div style="margin-top:12px;color:#777;font:20px ui-monospace,Menlo,monospace">prompts<br>tools<br>memory</div></div>`,{st:stage===1?'opacity:.55;':''});
+    if(stage===1){
+      const gauge=(cx,deg,up)=>`<svg style="position:absolute;left:${cx-90}px;top:980px" width="180" height="110" viewBox="0 0 180 110"><path d="M20 100 A70 70 0 0 1 160 100" stroke="#DADADA" stroke-width="12" fill="none" stroke-linecap="round"/><line x1="90" y1="100" x2="90" y2="36" stroke="#111" stroke-width="8" stroke-linecap="round" transform="rotate(${deg} 90 100)"/><circle cx="90" cy="100" r="9" fill="#111"/></svg>`+svg(path(`M${cx+110} 1060 L${cx+110} ${up?990:1130}`,{arrow:true,w:5}));
+      h+=gauge(300,58,true)+gauge(780,-58,false);
+    }
+  } else {
+    h+=svg(path('M540 600 L540 700')+node(540,700)+path('M330 690 C 220 820, 300 1000, 540 980',{dash:'14 14',arrow:true}));
+    h+=card(340,700,400,260,`<div style="position:absolute;inset:0;background:#0E0E10;color:#DADADA;font-size:26px;padding:24px">harness<div style="margin-top:12px;color:#777;font:20px ui-monospace,Menlo,monospace">prompts, tools<br>memory, sessions</div></div>`);
+    h+=svg(node(340,700)+node(740,700)+node(340,960)+node(740,960));
+  }
+  return h;
+}
+function teamDiagram(show){
+  let h=terminal(340,520,400,270,{fs:16,n:6,title:'jcode'})+pill(540,436,'boss');
+  const xs=[160,420,660,920];
+  h+=svg(xs.map(x=>path(`M540 790 L${x} 880`,{dash:'12 12'})).join('')+xs.map(x=>node(x,880)).join(''));
+  if(show) xs.forEach((x,i)=>{ h+=terminal(x-100,900,200,130,{fs:11,n:4,title:'worker'}); });
+  return h;
+}
+
+// ---------- main version shots (durations in frames; ranges are computed) ----------
+const MAIN=[
+ // HOOK H1
+ {id:'S01',beat:'S01',d:40,words:'Cursor has a price tag.',
+  motion:{p:'Thin black line draws in from the left edge to x 260; the Cursor chip pops on it with an overshoot (scale 0 to 1.12 to 1). The Cursor checkout card rises from y +50 and settles.',s:'Chip label "Cursor" fades up under the chip; the card shadow grows as it lands.',a:'Card drifts up 3 px over the shot; line end breathes 2 px.'},
+  cap:'No caption in S01-S03 (the chips and cards carry it, as in the reference). Overlay band y 290-440 shows the shared overlay.',
+  place:'Chip line y 540 from x -40 to 260; Cursor chip centre (200,540) r 44, label y 596; card x 300-780 y 660-1180, no sheets.',
+  sfx:'whoosh-soft (line), pop (chip)',assets:'Cursor logo; UI capture Cursor Pro checkout ($20)',
+  r:()=>ground()+overlay()+hookChips(1)+GH(stackCard(1,0,{dy:50}))+stackCard(1,0)+hint('M540 1240 L540 1200')},
+ {id:'S02',beat:'S02',d:40,words:'Codex has a price tag.',
+  motion:{p:'Line extends to x 460, Codex chip pops. The ChatGPT plan card dissolves in over the Cursor card (crossfade 8 frames) and one sheet appears behind.',s:'Cursor card fades to 0 underneath.',a:'Stack drifts up 3 px; chips breathe.'},
+  cap:'No caption.',place:'Codex chip (400,540); card same rect with 1 sheet (+18,+14).',
+  sfx:'pop (chip), whoosh-soft (card swap)',assets:'Codex logo; UI capture ChatGPT pricing (reads "ChatGPT plan", no price)',
+  r:()=>ground()+overlay()+hookChips(2)+GH(stackCard(1,0))+stackCard(2,0)},
+ {id:'S03',beat:'S03',d:45,words:'Claude Code has a price tag.',
+  motion:{p:'Line to x 660, Claude chip pops. Claude Max card dissolves in, stack grows to two sheets.',s:'ChatGPT card fades underneath.',a:'Stack drifts 3 px; slight rotateY 2 deg to 0.'},
+  cap:'No caption.',place:'Claude chip (600,540); card same rect with 2 sheets.',
+  sfx:'pop, whoosh-soft',assets:'Claude logo; UI capture Claude pricing (Max, "From $100")',
+  r:()=>ground()+overlay()+hookChips(3)+stackCard(3,0)},
+ {id:'S04',beat:'S04',d:40,words:'One developer built something that',
+  motion:{p:'Chip line slides left out of frame (translateX -900, 12 frames). The card stack lifts and shrinks (scale 0.92, y to 560) to make room for captions.',s:'Caption words land one by one under the stack.',a:'Stack drifts up 3 px.'},
+  cap:'"one developer built something that" regular 40, each word grey to black.',place:'Stack x 300-780 y 560-1040 (scaled); caption block top y 1090.',
+  sfx:'whoosh-soft (chips exit)',assets:'none new',
+  r:()=>ground()+overlay()+GH(hookChips(3,{label:false}))+hint('M300 540 L80 540')+stackCard(3,0,{dy:-100,tf:'scale(.92)'})+hookCaps(1)},
+ {id:'S05',beat:'S04',d:32,words:'beats all of them',
+  motion:{p:'Crack web spreads over the stack from its centre (lines draw outward over 10 frames, white wide stroke under black thin stroke).',s:'"beats all of them" lands bold italic; caption block re-centres up 60 px.',a:'Cracked stack shivers 2 px for 6 frames then holds with drift.'},
+  cap:'line 1 regular; line 2 "beats all of them" bold italic 64.',place:'Crack origin (540,800), clipped to the stack rect; caption block top y 1030.',
+  sfx:'glass-crack',assets:'none new',
+  r:()=>ground()+overlay()+stackCard(3,0,{dy:-100,tf:'scale(.92)',tilt:false})+crack(282,546,560,560)+hookCaps(2)},
+ {id:'S06',beat:'S05',d:24,words:'and made it',
+  motion:{p:'Cracked stack drops down the frame (y +260 over the shot, easing in) and fades to 0.5.',s:'Caption line 3 lands; block re-centres up again.',a:'Pieces of the crack web separate 3 px.'},
+  cap:'line 3 "and made it" regular 40.',place:'Stack falling through y 820-1300; caption block top y 970.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground()+overlay()+`<div style="position:absolute;inset:0;opacity:.55">${stackCard(3,0,{dy:160,tf:'scale(.9)',tilt:false})+crack(282,806,560,560)}</div>`+hint('M900 1000 L900 1180')+hookCaps(3)},
+ {id:'S07',beat:'S05',d:42,words:'free and open source.',
+  motion:{p:'Black bar wipes left to right (10 frames) with "free & open source" in white.',s:'The last of the cracked stack leaves the bottom of the frame.',a:'Caption block drifts up 4 px; vignette darkens 3%.'},
+  cap:'line 4 black bar "free & open source" 44 white on #111.',place:'Caption block top y 900; bar centred, about x 300-780.',
+  sfx:'swipe',assets:'none new',
+  r:()=>ground()+overlay()+`<div style="position:absolute;inset:0;opacity:.18">${stackCard(3,0,{dy:420,tf:'scale(.88)'})}</div>`+hookCaps(4)},
+ // BODY
+ {id:'S08',beat:'S06',d:24,words:"It's called JCode,",
+  motion:{p:'GitHub repo card grows from 30% at the centre to full size (spring, 14 frames).',s:'JCode donut mark pops above the card; caption lands.',a:'Card settles with a 2 px overshoot drift.'},
+  cap:'"it\'s called" regular 40 + "JCode" bold 56.',place:'Card x 240-840 y 640-1000; JCode mark centre (540,560) r 56; caption y 1070.',
+  sfx:'whoosh-soft, pop',assets:'JCode mark (assets/logos/jcode.svg); UI capture github.com/1jehuang/jcode (assets/shots/github-jcode.png)',
+  r:()=>ground()+GH(card(450,740,180,108,uiGithub(180,108)))+card(240,640,600,360,uiGithub(600,360))+chip(540,560,'JCode',{r:56,label:false,fs:40})+cap(1070,[[{t:"it's called"},{t:'JCode',s:'bold'}]])},
+ {id:'S09',beat:'S07',d:32,words:"and there's one thing",
+  motion:{p:'Hard cut to the big GitHub card at the top, slow push-in scale 1.00 to 1.03 across S09-S11.',s:'Caption words land under the card.',a:'Card shadow softens as it pushes in.'},
+  cap:'"and there\'s one thing" regular 40.',place:'Card x 120-960 y 300-760 (push keeps it inside x 100-980); caption y 850.',
+  sfx:'whoosh-soft (cut)',assets:'UI capture GitHub repo (larger crop)',
+  r:()=>ground()+card(120,300,840,460,uiGithub(840,460))+cap(850,[[{t:"and there's one"},{t:'thing',g:true}]])},
+ {id:'S10',beat:'S07',d:32,words:'you need to know',
+  motion:{p:'"you need to know" lands bold italic, word by word.',s:'Push-in continues (1.015).',a:'Caption block drifts up 2 px.'},
+  cap:'line 2 "you need to know" bold italic 64.',place:'caption block y 850-1000.',
+  sfx:'none',assets:'none new',
+  r:()=>ground()+card(120,300,840,460,uiGithub(840,460),{tf:'scale(1.015)'})+cap(850,[[{t:"and there's one thing"}],[{t:'you need to',s:'bi'},{t:'know',s:'bi',g:true}]])},
+ {id:'S11',beat:'S07',d:24,words:'before anything else.',
+  motion:{p:'Black bar wipes "before anything else" left to right.',s:'Push-in ends at 1.03.',a:'Card drift 2 px.'},
+  cap:'line 3 black bar "before anything else".',place:'bar at y 1010, centred.',
+  sfx:'swipe',assets:'none new',
+  r:()=>ground()+card(120,300,840,460,uiGithub(840,460),{tf:'scale(1.03)'})+cap(850,[[{t:"and there's one thing"}],[{t:'you need to know',s:'bi'}],[{t:'before anything else',s:'bar'}]])},
+ {id:'S12',beat:'S08',d:40,words:'Every coding agent has a',
+  motion:{p:'Hard cut. Human hand slides in from the left edge, robot hand from the right, both easing to almost touching (12 frames).',s:'Contact shadows fade in under both hands; caption starts.',a:'Both hands keep drifting inward 1 px per 10 frames.'},
+  cap:'"every coding agent has a" regular 40.',place:'Human hand box x 90-490 y 640-1040; robot hand box x 590-990 y 560-960; caption y 1110.',
+  sfx:'whoosh-soft (x2, hands)',assets:'Photo cut-outs: human hand, robot hand (image tool, on white, with contact shadow)',
+  r:()=>ground()+GH(hand('human',-560,380,700,615,{label:false})+hand('robot',1000,340,748,615,{label:false}))+handsScene({labels:true})+hint('M60 840 L140 840')+hint('M1020 760 L940 760')+cap(1110,[[{t:'every coding agent has'},{t:'a',g:true}]])},
+ {id:'S13',beat:'S09',d:32,words:'middle layer between you',
+  motion:{p:'Bracket line draws between the hands (stroke-dashoffset, 14 frames): node at (470,560), right to x 560, down to (560,920), node.',s:'"Middle Layer" lands bold italic.',a:'Hands drift.'},
+  cap:'line 1 regular; line 2 "Middle Layer" bold italic 64; line 3 "between you" regular (grey).',place:'Bracket as above; caption block y 1060.',
+  sfx:'whoosh-soft (line draw)',assets:'none new',
+  r:()=>ground()+handsScene({bracket:'draw'})+cap(1060,[[{t:'every coding agent has a'}],[{t:'Middle Layer',s:'bi'}],[{t:'between'},{t:'you',g:true}]])},
+ {id:'S14',beat:'S09',d:24,words:'and the AI.',
+  motion:{p:'"& the AI." lands; the robot hand nudges 8 px toward the human hand.',s:'Nodes pulse once (scale 1.2 to 1).',a:'Whole scene drifts up 3 px, preparing the tilt.'},
+  cap:'line 3 "between you & the AI." regular 40.',place:'same rects as S13.',
+  sfx:'pop (node pulse)',assets:'none new',
+  r:()=>ground()+handsScene({bracket:true,drift:8})+cap(1060,[[{t:'every coding agent has a'}],[{t:'Middle Layer',s:'bi'}],[{t:'between you & the AI.'}]])},
+ {id:'S15',beat:'S10',d:32,words:"That's the part handling",
+  motion:{p:'Camera tilt: the hands and bracket translate down to the bottom of the safe box and scale to 0.72 (14 frames), freeing the top.',s:'Header "that\'s the part handling" lands at the top in bold italic.',a:'Hands keep drifting.'},
+  cap:'Header "that\'s the part handling" bold italic 56 at y 420.',place:'Hands scaled 0.72: human x 150-440 y 950-1240, robot x 520-810 y 900-1190; bracket scaled with them; header y 420.',
+  sfx:'whoosh-soft (tilt)',assets:'none new',
+  r:()=>ground()+`<div style="position:absolute;inset:0;transform:translate(0,340px) scale(.72);transform-origin:540px 800px">${handsScene({bracket:true,labels:false})}</div>`+hint('M980 520 L980 760')+cap(420,[[{t:"that's the part",s:'bi'},{t:'handling',s:'bi',g:true}]])},
+ {id:'S16',beat:'S11',d:45,words:'your prompts, tools, memory and sessions.',
+  motion:{p:'Four icon rows build one per spoken word: icon pops (overshoot), then the label reveals. Rows at y 520, 600, 680, 760.',s:'Hands below drift 2 px; bracket nodes pulse on each row.',a:'Header drifts up 2 px.'},
+  cap:'Rows as caption: "Your Prompts", "Your Tools", "Your Memory", "Your Sessions" bold 44 with 48 px black icons.',place:'Icons at x 300; labels at x 372; rows y 520/600/680/760.',
+  sfx:'pop (x4, one per row)',assets:'4 black icons (prompt, tools, memory, sessions)',
+  r:()=>ground()+`<div style="position:absolute;inset:0;transform:translate(0,340px) scale(.72);transform-origin:540px 800px">${handsScene({bracket:true,labels:false})}</div>`+cap(420,[[{t:"that's the part handling",s:'bi'}]])+iconRow(300,520,'prompt','Your Prompts')+iconRow(300,600,'tools','Your Tools')+iconRow(300,680,'memory','Your Memory')+iconRow(300,760,'sessions','Your Sessions',{g:true})},
+ {id:'S17',beat:'S12',d:40,words:"It's known as a harness,",
+  motion:{p:'Icon list scrolls off the top; the scene slides back up to full size. A dashed looping arrow draws from the bottom node down to the harness icon (18 frames); the icon pops with a bounce.',s:'"Harness" lands bold italic.',a:'Hands drift.'},
+  cap:'"it\'s known as a" regular 40 + "Harness" bold italic 72.',place:'Hands: human x 90-490 y 480-880, robot x 590-990 y 400-800; arrow from (560,760) looping to (540,950); icon centre (540,1010) 110 px; caption y 1100.',
+  sfx:'whoosh-soft (arrow), pop (icon)',assets:'3D harness icon (image tool, glossy, neutral)',
+  r:()=>ground()+GH(iconRow(300,300,'sessions','Your Sessions'))+handsScene({dy:-160,bracket:true,labels:false})+svg(path('M560 760 C 560 840, 460 850, 480 900 C 500 950, 540 920, 540 945',{dash:'14 12',arrow:true}))+harnessIcon(540,1010)+cap(1100,[[{t:"it's known as a"},{t:'Harness',s:'bi'}]])},
+ {id:'S18',beat:'S14',d:45,words:"and most apps you're paying for",
+  motion:{p:'Hands exit down and out. The three paid-tool chips return on a line at y 600, but as heavy grey blocks that drop onto it one by one (6 frames apart).',s:'Caption lands below.',a:'Blocks settle with a 3 px bounce; line breathes.'},
+  cap:'"and most apps you\'re paying for" regular 40.',place:'Line y 600 x 100-980; blocks 120x120 centred at x 260/540/820; labels under; caption y 980.',
+  sfx:'pop (x3, heavy)',assets:'Cursor, Codex, Claude logos (grey treatment)',
+  r:()=>ground()+svg(path('M100 600 L980 600'))+['Cursor','Codex','Claude'].map((n,i)=>heavyBlock(n,260+i*280,540)+label(260+i*280-130,680,260,n,{fw:400,c:'#161616',st:'text-transform:lowercase'})).join('')+cap(980,[[{t:"and most apps you're paying"},{t:'for',g:true}]])},
+ {id:'S19',beat:'S14',d:40,words:'built theirs big and heavy.',
+  motion:{p:'The line sags under the blocks (bezier bends to y 660) and the blocks drop 40 px with it (10 frames, ease out).',s:'"big & heavy" lands bold upright.',a:'Blocks sway 2 px.'},
+  cap:'line 2 "built theirs" regular + "big & heavy" bold 56.',place:'Sagged line through (540,660); blocks y 580-700; caption block y 980.',
+  sfx:'whoosh-soft (sag)',assets:'none new',
+  r:()=>ground()+svg(path('M100 600 C 300 600, 400 668, 540 668 C 680 668, 780 600, 980 600'))+['Cursor','Codex','Claude'].map((n,i)=>heavyBlock(n,260+i*280,i===1?600:574,(i-1)*6)+label(260+i*280-130,i===1?740:714,260,n,{fw:400,c:'#161616',st:'text-transform:lowercase'})).join('')+cap(980,[[{t:"and most apps you're paying for"}],[{t:'built theirs'},{t:'big & heavy',s:'bold'}]])},
+ {id:'S20',beat:'S15',d:8,words:'',brk:true,
+  motion:{p:'Blur transition: whole frame blurs to 16 px and the grey vignette deepens, then the next shot blurs in.',s:'none',a:'none'},
+  cap:'none',place:'full frame',sfx:'blur-swell',assets:'none',
+  r:()=>blurOf(ground()+svg(path('M100 600 C 300 600, 400 668, 540 668 C 680 668, 780 600, 980 600'))+cap(980,[[{t:"and most apps you're paying for"}],[{t:'built theirs'},{t:'big & heavy',s:'bold'}]]))},
+ {id:'S21',beat:'S15',d:40,words:'JCode rebuilt that whole thing',
+  motion:{p:'Text-only beat: "JCode" lands big, then the words follow one by one.',s:'A faint JCode mark fades in behind the text at 6% opacity and drifts.',a:'Text block drifts up 3 px.'},
+  cap:'"JCode" bold 96 + "rebuilt that whole thing" regular 40, single line, centred.',place:'caption y 760.',
+  sfx:'pop (JCode)',assets:'JCode mark',
+  r:()=>ground()+`<div style="position:absolute;left:390px;top:640px;width:300px;height:300px;opacity:.06">${IMG(LOGO.JCode,`<div style="position:absolute;inset:0;border-radius:50%;border:40px solid #111"></div>`,'object-fit:contain')}</div>`+cap(760,[[{t:'JCode',s:'big'},{t:'rebuilt that whole'},{t:'thing',g:true}]])},
+ {id:'S22',beat:'S15',d:32,words:'from scratch in Rust.',
+  motion:{p:'Second line lands; the Rust chip pops at the end of it; an underline draws left to right under the line (10 frames).',s:'First line drifts up 20 px to make room.',a:'Chip breathes.'},
+  cap:'line 2 "from scratch in" regular + "Rust" bold 56 + Rust chip inline; underline 4 px black under line 2.',place:'line 2 y 870; underline y 950 x 300-780.',
+  sfx:'pop (Rust), whoosh-soft (underline)',assets:'Rust logo',
+  r:()=>ground()+cap(740,[[{t:'JCode',s:'big'},{t:'rebuilt that whole thing'}],[{t:'from scratch in'},{t:'Rust',s:'bold'},{t:inlineChip('Rust')}]])+svg(path('M300 950 L780 950',{w:5}))},
+ {id:'S23',beat:'S16',d:32,words:'Every extra session uses',
+  motion:{p:'Ground changes: dot grid fades in and the two grey swoosh ribbons slide in from the top-right and bottom-left (bleeding off frame). Row 1 label starts at x 140.',s:'Counter slot appears as a grey "1x".',a:'Swooshes keep drifting 4 px for the whole stats section.'},
+  cap:'Stat row label "every extra session uses" regular 40 (grey to black); no centred caption.',place:'Row 1 y 640, x 140-960.',
+  sfx:'whoosh-soft (swooshes)',assets:'none new',
+  r:()=>ground({grid:true,swoosh:true})+cap(640,[[{t:'every extra session'},{t:'uses',g:true}]],{align:'flex-start',x:140,w:820})},
+ {id:'S24',beat:'S17',d:32,words:'twenty times less memory',
+  motion:{p:'Counter ticks up to "20x" in about 10 steps over 18 frames (intermediate values are motion only, not drawn here), then lands bold.',s:'"less memory" reveals next to it.',a:'Row drifts 2 px; grid shimmer.'},
+  cap:'Row 1: "20x" bold 72 + "less memory" bold 40; label line above it in regular 40.',place:'Row 1 y 700, number x 140-310.',
+  sfx:'tick (counter)',assets:'none new',
+  r:()=>ground({grid:true,swoosh:true})+cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory','',{})},
+ {id:'S25',beat:'S17',d:24,words:'than Claude Code.',
+  motion:{p:'"than" reveals and the Claude chip pops at the row end with overshoot.',s:'Row settles 4 px left.',a:'Swoosh drift.'},
+  cap:'Row 1 continues: "than" regular 40 + Claude chip 64 px.',place:'chip at x 760-824, y 680.',
+  sfx:'pop (Claude)',assets:'Claude logo',
+  r:()=>ground({grid:true,swoosh:true})+cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory than','Claude')},
+ {id:'S26',beat:'S18',d:45,words:'And it opens in fourteen milliseconds.',
+  motion:{p:'Row 2 builds under row 1: label "opens in", then a race bar: the JCode bar fills to 14 ms in 3 frames and stops; "14 ms" lands bold.',s:'A second, empty bar track appears under it for Codex (grey).',a:'Rows drift 2 px.'},
+  cap:'Row 2: "opens in" regular 40; "14 ms" bold 56 at the JCode bar end.',place:'Row 2 y 820; bars x 140-900, JCode bar 80 px long; Codex track empty.',
+  sfx:'pop (bar stop), tick',assets:'JCode mark',
+  r:()=>ground({grid:true,swoosh:true})+cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory than','Claude')+raceRows(0)},
+ {id:'S27',beat:'S19',d:40,words:'Codex needs almost a second.',
+  motion:{p:'Codex bar crawls across the track for the whole shot and lands on 883 ms at the end; the Codex chip pops at the bar end.',s:'"63x faster to open" small bold label appears under the bars on the last 8 frames.',a:'Rows drift.'},
+  cap:'Row 2 continues: "883 ms" bold 56 at the Codex bar end; result label "63x faster to open" bold 36.',place:'Codex bar x 140-880 y 920; label y 990.',
+  sfx:'tick (crawl), pop (chip)',assets:'Codex logo',
+  r:()=>ground({grid:true,swoosh:true})+cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory than','Claude')+raceRows(1)+hint('M420 936 L820 936')},
+ {id:'S28',beat:'S20',d:32,words:"But here's where it",
+  motion:{p:'Both stat rows slide up as one block (to y 420-720, 12 frames) to make room.',s:'Caption "but here\'s where it" lands centred below.',a:'Swooshes drift; grid stays.'},
+  cap:'"but here\'s where it" regular 40 centred.',place:'Stats block y 420-720; caption y 900.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground({grid:true,swoosh:true})+`<div style="position:absolute;inset:0;transform:translateY(-200px)">${cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory than','Claude')+raceRows(1)}</div>`+hint('M1000 800 L1000 640')+cap(900,[[{t:"but here's where"},{t:'it',g:true}]])},
+ {id:'S29',beat:'S20',d:26,words:'gets good.',
+  motion:{p:'"GETS GOOD" punches in at scale 1.15 and settles to 1 (6 frames), huge bold caps.',s:'Stats block dims to 60%.',a:'Letter-spacing tightens 2 px as it settles.'},
+  cap:'"GETS GOOD" bold 96 caps.',place:'y 960, centred.',
+  sfx:'riser',assets:'none new',
+  r:()=>ground({grid:true,swoosh:true})+`<div style="position:absolute;inset:0;transform:translateY(-200px);opacity:.6">${cap(600,[[{t:'every extra session uses'}]],{align:'flex-start',x:140,w:820})+statRow(680,'20x','less memory than','Claude')+raceRows(1)}</div>`+cap(900,[[{t:"but here's where it"}],[{t:'GETS GOOD',s:'big'}]])},
+ {id:'S30',beat:'S21',d:45,words:'It keeps notes on each project',
+  motion:{p:'Hard cut back to the plain ground. The dark JCode terminal card slides in from the left (x -200 to 140, 14 frames, ease out) and keeps a slow drift right.',s:'Caption lands under it.',a:'Terminal cursor blinks; card push-in 1.01.'},
+  cap:'"it keeps notes on each project" regular 40.',place:'Terminal x 140-940 y 320-780; caption y 870.',
+  sfx:'whoosh-soft',assets:'JCode terminal capture (own recording, memory note visible)',
+  r:()=>ground()+GH(terminal(-120,320,800,460,{fs:22}))+hint('M60 550 L120 550')+terminal(140,320,800,460,{fs:22})+cap(870,[[{t:'it keeps notes on each'},{t:'project',g:true}]])},
+ {id:'S31',beat:'S22',d:32,words:'right on your computer,',
+  motion:{p:'A small white "notes.md" file card peels out of the terminal\'s right edge and settles at a 6 deg tilt beside it (10 frames).',s:'Sparkle bullet 1 lands: "right on your computer".',a:'Terminal drift; file card bobs 2 px.'},
+  cap:'Sparkle bullet row: four-point star + "right on your computer" bold 44.',place:'File card x 720-980 y 560-760 rotate 6 deg; bullet at x 300 y 880.',
+  sfx:'swipe (peel), pop (sparkle)',assets:'memory file mock (text)',
+  r:()=>ground()+terminal(140,320,800,460,{fs:22})+card(720,560,260,200,`<pre style="margin:0;padding:18px;font:400 20px/1.5 ui-monospace,Menlo,monospace;color:#333">notes.md\n\n- prefers small commits\n- tests before push\n- uses pnpm</pre>`,{tf:'rotate(6deg)'})+hint('M700 600 L760 640')+sparkleRow(300,880,[{t:'right on your computer',s:'bold'}])},
+ {id:'S32',beat:'S22',d:24,words:'so it remembers',
+  motion:{p:'Sparkle bullet 2 starts: star pops, "so it remembers" reveals grey to black.',s:'Terminal card pushes in to 1.03; the memory line inside highlights.',a:'File card bobs.'},
+  cap:'Bullet 2: "so it remembers" regular 40 (landing).',place:'bullet 2 at x 300 y 960.',
+  sfx:'pop',assets:'none new',
+  r:()=>ground()+terminal(140,320,800,460,{fs:22,tf:'scale(1.03)'})+card(720,560,260,200,`<pre style="margin:0;padding:18px;font:400 20px/1.5 ui-monospace,Menlo,monospace;color:#333">notes.md\n\n- prefers small commits\n- tests before push\n- uses pnpm</pre>`,{tf:'rotate(6deg)'})+sparkleRow(300,880,[{t:'right on your computer',s:'bold'}])+sparkleRow(300,960,[{t:'so it'},{t:'remembers',g:true}])},
+ {id:'S33',beat:'S22',d:40,words:'how you like things done.',
+  motion:{p:'Bullet 2 completes with "like things done" bold italic.',s:'Terminal content changes state (second capture: the agent recalls a note).',a:'Card drift; file card bobs.'},
+  cap:'Bullet 2: "so it remembers how you" regular + "like things done" bold italic 56.',place:'bullet 2 y 960-1040 (wraps to two lines if needed, inside x 300-980).',
+  sfx:'none',assets:'second terminal capture',
+  r:()=>ground()+terminal(140,320,800,460,{fs:22,tf:'scale(1.03)'})+card(720,560,260,200,`<pre style="margin:0;padding:18px;font:400 20px/1.5 ui-monospace,Menlo,monospace;color:#333">notes.md\n\n- prefers small commits\n- tests before push\n- uses pnpm</pre>`,{tf:'rotate(6deg)'})+sparkleRow(300,880,[{t:'right on your computer',s:'bold'}])+sparkleRow(300,960,[{t:'so it remembers how you'}])+cap(1030,[[{t:'like things done',s:'bi'}]],{x:368,w:600})},
+ {id:'S34',beat:'S23',d:40,words:'You can run a bunch',
+  motion:{p:'Layout swap: caption jumps to the top, the terminal card shrinks and moves to the centre (x 340-740 y 520-750, 12 frames). File card and bullets exit.',s:'Caption lands at the top.',a:'Card drift.'},
+  cap:'"you can run a bunch" regular 40 at the top.',place:'Caption y 400; centre terminal x 340-740 y 520-750.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground()+GH(terminal(140,320,800,460,{fs:22}))+terminal(340,520,400,230,{fs:14,n:7})+hint('M240 420 L330 500')+cap(400,[[{t:'you can run a'},{t:'bunch',g:true}]])},
+ {id:'S35',beat:'S23',d:32,words:'of agents at once',
+  motion:{p:'Two more terminal cards fan out from behind the centre one to the left and right, each with a 14 deg rotateY (10 frames).',s:'"agents at once" lands bold.',a:'All three cards drift 2 px apart.'},
+  cap:'line 2 "of" regular + "agents at once" bold 56.',place:'Left card x 100-440 y 560-790; right x 640-980 y 560-790; centre x 340-740 y 500-730.',
+  sfx:'whoosh-soft (x2), pop',assets:'none new',
+  r:()=>ground()+cap(400,[[{t:'you can run a bunch'}],[{t:'of'},{t:'agents at once',s:'bold'}]])+terminal(100,560,340,230,{fs:12,n:7,tf:'perspective(1400px) rotateY(14deg)'})+terminal(640,560,340,230,{fs:12,n:7,tf:'perspective(1400px) rotateY(-14deg)'})+terminal(340,500,400,230,{fs:14,n:7})},
+ {id:'S36',beat:'S24',d:40,words:'without your laptop slowing down.',
+  motion:{p:'A small RAM meter card slides up under the cards; its bar stays flat at 10.4 MB while the cards keep running (cursor blinks in all three).',s:'"slowing down" lands bold upright.',a:'Cards drift.'},
+  cap:'line 3 "without your laptop" regular + "slowing down" bold 56.',place:'Meter card x 290-790 y 860-960; caption line 3 y 1040.',
+  sfx:'pop (meter)',assets:'none new',
+  r:()=>ground()+cap(400,[[{t:'you can run a bunch'}],[{t:'of'},{t:'agents at once',s:'bold'}]])+terminal(100,560,340,230,{fs:12,n:7,tf:'perspective(1400px) rotateY(14deg)'})+terminal(640,560,340,230,{fs:12,n:7,tf:'perspective(1400px) rotateY(-14deg)'})+terminal(340,500,400,230,{fs:14,n:7})+card(290,860,500,100,`<div style="display:flex;align-items:center;gap:16px;padding:26px 24px;font-size:26px;font-weight:700"><span style="color:#777;font-weight:500">RAM</span><div style="flex:1;height:22px;border-radius:8px;background:#EDEDED;overflow:hidden"><div style="width:8%;height:100%;background:#111"></div></div><span>10.4 MB</span></div>`)+cap(1040,[[{t:'without your laptop'},{t:'slowing down',s:'bold'}]])},
+ {id:'S37',beat:'S25',d:8,words:'',brk:true,
+  motion:{p:'Blur transition.',s:'none',a:'none'},cap:'none',place:'full frame',sfx:'blur-swell',assets:'none',
+  r:()=>blurOf(ground()+cap(400,[[{t:'you can run a bunch'}],[{t:'of'},{t:'agents at once',s:'bold'}]])+terminal(340,500,400,230,{fs:14,n:7})+cap(1040,[[{t:'without your laptop'},{t:'slowing down',s:'bold'}]]))},
+ {id:'S38',beat:'S25',d:32,words:'And the best part?',
+  motion:{p:'Text only: words land centred, the question mark pops last.',s:'Vignette lifts 3%.',a:'Text drifts up 3 px.'},
+  cap:'"and the best part?" bold italic 64.',place:'y 780 centred.',sfx:'none',assets:'none',
+  r:()=>ground()+cap(780,[[{t:'and the best',s:'bi'},{t:'part?',s:'bi',g:true}]])},
+ {id:'S39',beat:'S26',d:40,words:'One agent can bring in',
+  motion:{p:'One terminal card drops into the centre with a soft bounce (10 frames).',s:'Caption lands at the top.',a:'Card drift; cursor blink.'},
+  cap:'"one agent can bring in" regular 40 at the top.',place:'Caption y 340; card x 290-790 y 480-760.',
+  sfx:'whoosh-soft',assets:'JCode terminal capture (swarm start)',
+  r:()=>ground()+cap(340,[[{t:'one agent can bring'},{t:'in',g:true}]])+GH(terminal(290,380,500,280,{fs:16,n:7}))+terminal(290,480,500,280,{fs:16,n:7})+hint('M820 400 L820 470')},
+ {id:'S40',beat:'S27',d:24,words:'its own helpers.',
+  motion:{p:'Three connector lines draw down from the card bottom to hollow nodes, and three small terminal cards pop onto them, 5 frames apart.',s:'"its own helpers" lands bold italic.',a:'All cards drift.'},
+  cap:'line 2 "its own helpers" bold italic 64 at the top block.',place:'Lines from (540,760) to nodes at (240,920), (540,920), (840,920); helper cards 260x170 at x 110/410/710, y 940-1110.',
+  sfx:'pop (x3)',assets:'none new',
+  r:()=>ground()+cap(340,[[{t:'one agent can bring in'}],[{t:'its own helpers',s:'bi'}]])+terminal(290,480,500,280,{fs:16,n:7})+svg(path('M540 760 L240 920')+path('M540 760 L540 920')+path('M540 760 L840 920')+node(240,920)+node(540,920)+node(840,920))+[110,410,710].map(x=>terminal(x,940,260,170,{fs:12,n:5,title:'helper'})).join('')},
+ {id:'S41',beat:'S28',d:40,words:'It turns into the boss,',
+  motion:{p:'The cards merge into one wide dark terminal frame (x 100-980); inside it a 2400 px wide strip of three panes starts panning right to left. A "boss" pill pops above the left pane.',s:'Caption lands below.',a:'Strip pans about 4 px per frame for the whole shot.'},
+  cap:'"it turns into the" regular + "boss" bold italic 64.',place:'Frame x 100-980 y 480-900 (content pans inside the frame; the card itself stays inside the safe box); pill at (300,440); caption y 980.',
+  sfx:'whoosh-soft, pop (pill)',assets:'Wide terminal capture (three panes, own recording)',
+  r:()=>ground()+terminal(100,480,880,420,{fs:16,n:9,title:'jcode  swarm'})+pill(300,440,'boss')+hint('M900 700 L600 700')+cap(980,[[{t:'it turns into the'},{t:'boss',s:'bi',g:true}]])},
+ {id:'S42',beat:'S29',d:40,words:'the rest do the work,',
+  motion:{p:'Pan continues: worker panes slide into view; "worker" pills pop above each as it arrives.',s:'"do the work" lands bold.',a:'Pan keeps going; frame drift 2 px.'},
+  cap:'line 2 "the rest" regular + "do the work" bold 56.',place:'Pills at (540,440) and (800,440); caption block y 980.',
+  sfx:'pop (x2)',assets:'none new',
+  r:()=>ground()+terminal(100,480,880,420,{fs:16,n:9,title:'jcode  swarm',lines:[`<span style="color:#F9B46C">worker</span>  editing src/api/routes.rs`,`<span style="color:#F9B46C">worker</span>  writing tests/api_test.rs`,`<span style="color:#F9B46C">worker</span>  updating docs/README.md`,``,`<span style="color:#8F8">&#10003;</span> routes.rs saved`,`<span style="color:#8F8">&#10003;</span> api_test.rs saved`,`<span style="color:#7FB7FF">&gt;</span> <span style="color:#777">&#9608;</span>`]})+pill(300,440,'boss')+pill(540,440,'worker')+pill(800,440,'worker')+cap(980,[[{t:'it turns into the'},{t:'boss',s:'bi'}],[{t:'the rest'},{t:'do the work',s:'bold'}]])},
+ {id:'S43',beat:'S30',d:32,words:'and they all build',
+  motion:{p:'Cut to three terminal cards tilted in 3D (rotateY -22 deg, perspective) staggered in depth; they slide in from the right one after another.',s:'Caption lands.',a:'Cards drift left 2 px per 10 frames.'},
+  cap:'"and they all build" regular 40.',place:'Cards 600x330 at (160,520), (220,470), (280,420) with rotateY -22 deg; caption y 940.',
+  sfx:'whoosh-soft (x3)',assets:'three terminal captures',
+  r:()=>ground()+swarmCards()+hint('M1000 600 L900 600')+cap(940,[[{t:'and they all'},{t:'build',g:true}]])},
+ {id:'S44',beat:'S30',d:24,words:'in one codebase.',
+  motion:{p:'Thin lines draw from the bottom of each card to one folder chip below; black bar wipes "in one codebase".',s:'Folder icon pops.',a:'Cards drift.'},
+  cap:'line 2 black bar "in one codebase".',place:'Folder node at (540,1060), folder icon under it; lines from each card bottom; caption block y 880, bar y 950.',
+  sfx:'swipe, pop',assets:'folder icon',
+  r:()=>ground()+swarmCards()+cap(880,[[{t:'and they all build'}],[{t:'in one codebase',s:'bar'}]])+svg(path('M400 850 L470 1060')+path('M700 800 L560 1060')+path('M760 750 L600 1060',{op:.5})+node(540,1060,18))+icon('folder',516,1092,48)},
+ {id:'S45',beat:'S30',d:40,words:'If two of them grab',
+  motion:{p:'The front two cards stay bright, the third dims to 35%. A white file pill "main.rs" pops between them.',s:'Caption lands.',a:'Cards drift.'},
+  cap:'"if two of them grab" regular 40.',place:'File pill at (540,880) mono 34; caption y 980.',
+  sfx:'pop',assets:'none new',
+  r:()=>ground()+swarmCards({dim:[0]})+pill(540,860,'main.rs',{light:true,mono:true})+cap(980,[[{t:'if two of them'},{t:'grab',g:true}]])},
+ {id:'S46',beat:'S30',d:24,words:'the same file,',
+  motion:{p:'Two lines draw from the two bright cards to the file pill at the same time (8 frames).',s:'"the same file" lands bold italic.',a:'Pill pulses once.'},
+  cap:'line 2 "the same file" bold italic 64.',place:'Lines from (500,800) and (580,750) to (540,860); caption block y 940.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground()+swarmCards({dim:[0]})+svg(path('M470 800 L520 858')+path('M600 750 L560 858')+node(470,800)+node(600,750))+pill(540,860,'main.rs',{light:true,mono:true})+cap(940,[[{t:'if two of them grab'}],[{t:'the same file',s:'bi'}]])},
+ {id:'S47',beat:'S30',d:32,words:'JCode gives the second',
+  motion:{p:'The second card nudges 24 px to the right and lifts 10 px (it is the one being warned); an empty black pill slides up above it.',s:'Caption lands.',a:'Pill bobs 2 px.'},
+  cap:'"JCode gives the second" regular 40.',place:'Alert pill at (620,400); caption y 980.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground()+swarmCards({dim:[0]})+pill(540,860,'main.rs',{light:true,mono:true})+pill(620,392,'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',{st:'opacity:.4'})+hint('M620 470 L620 420')+cap(980,[[{t:'JCode gives the'},{t:'second',g:true}]])},
+ {id:'S48',beat:'S30',d:30,words:'a heads up.',
+  motion:{p:'The pill fills with "heads up: main.rs changed" (type-on, 8 frames); the black bar caption wipes.',s:'The file pill pulses.',a:'Cards drift.'},
+  cap:'line 2 black bar "a heads up".',place:'Alert pill (620,392) mono 30; caption block y 940.',
+  sfx:'pop, swipe',assets:'none new',
+  r:()=>ground()+swarmCards({dim:[0]})+pill(540,860,'main.rs',{light:true,mono:true})+pill(620,392,'heads up: main.rs changed',{fs:30,mono:true})+cap(940,[[{t:'JCode gives the second'}],[{t:'a heads up',s:'bar'}]])},
+ {id:'S49',beat:'S31',d:40,words:'The tool itself is free.',
+  motion:{p:'Hard cut. A white price card rises like the hook cards, with one sheet behind: JCode, "$0", MIT license badge.',s:'"free" lands bold italic under it.',a:'Card drift 3 px; shadow grows.'},
+  cap:'"the tool itself is" regular + "free" bold italic 72.',place:'Card x 290-790 y 420-880; caption y 960.',
+  sfx:'whoosh-soft, pop ($0)',assets:'JCode mark',
+  r:()=>ground()+GH(freeCard({}).replace('top:420px','top:470px'))+freeCard({})+cap(960,[[{t:'the tool itself is'},{t:'free',s:'bi'}]])},
+ {id:'S50',beat:'S32',d:32,words:'You sign in with',
+  motion:{p:'The card grows taller (height to 560) and two dashed sign-in slots unfold inside it.',s:'Caption lands.',a:'Card drift.'},
+  cap:'"you sign in with" regular 40.',place:'Card x 290-790 y 420-980; slots inside at y 820-916; caption y 1040.',
+  sfx:'whoosh-soft',assets:'none new',
+  r:()=>ground()+freeCard({slots:true})+cap(1040,[[{t:'you sign in'},{t:'with',g:true}]])},
+ {id:'S51',beat:'S32',d:24,words:'the Claude or',
+  motion:{p:'Claude chip slides in from the left and clicks into slot 1 (overshoot).',s:'Slot outline turns solid.',a:'Card drift.'},
+  cap:'line 2 "the Claude or" regular 40 with the Claude chip inline.',place:'slot 1 x 330-540 y 820-916.',
+  sfx:'pop',assets:'Claude logo',
+  r:()=>ground()+freeCard({slots:true,s1:'Claude'})+hint('M120 868 L300 868')+cap(1040,[[{t:'you sign in with'}],[{t:'the'},{t:inlineChip('Claude')+' Claude',s:'reg'},{t:'or',g:true}]])},
+ {id:'S52',beat:'S32',d:40,words:'ChatGPT plan you already have.',
+  motion:{p:'ChatGPT chip slides in from the right into slot 2; black bar wipes "you already have".',s:'Both slots pulse once.',a:'Card drift.'},
+  cap:'line 2 "the Claude or ChatGPT plan" regular 40; line 3 black bar "you already have".',place:'slot 2 x 560-750; caption block y 1040-1180.',
+  sfx:'pop, swipe',assets:'ChatGPT logo',
+  r:()=>ground()+freeCard({slots:true,s1:'Claude',s2:'ChatGPT'})+cap(1040,[[{t:'you sign in with'}],[{t:'the Claude or ChatGPT plan'}],[{t:'you already have',s:'bar'}]])},
+ {id:'S53',beat:'S33',d:40,words:'So you get one of',
+  motion:{p:'Cut: GitHub card small at the top centre drifts up slowly for the whole payoff (y 340 to 320 across S53-S56).',s:'Caption lands.',a:'Card push-in 1.01.'},
+  cap:'"so you get one of" regular 40.',place:'Card x 290-790 y 340-640; caption y 740.',
+  sfx:'whoosh-soft',assets:'UI capture GitHub repo',
+  r:()=>ground()+card(290,340,500,300,uiGithub(500,300))+cap(740,[[{t:'so you get one'},{t:'of',g:true}]])},
+ {id:'S54',beat:'S33',d:32,words:'the fastest coding agents',
+  motion:{p:'"the fastest coding agents" lands bold italic word by word.',s:'Card drifts up 8 px.',a:'Caption block re-centres.'},
+  cap:'line 2 "the fastest coding agents" bold italic 64.',place:'caption block y 720.',
+  sfx:'none',assets:'none new',
+  r:()=>ground()+card(290,332,500,300,uiGithub(500,300))+cap(720,[[{t:'so you get one of'}],[{t:'the fastest coding',s:'bi'},{t:'agents',s:'bi',g:true}]])},
+ {id:'S55',beat:'S33',d:24,words:'out there without',
+  motion:{p:'Line 3 lands.',s:'One sheet peeks out behind the card (slides out 18 px).',a:'Card drift.'},
+  cap:'line 3 "out there without" regular 40.',place:'caption block y 720-900.',
+  sfx:'none',assets:'none new',
+  r:()=>ground()+card(290,326,500,300,uiGithub(500,300),{sheets:1})+cap(720,[[{t:'so you get one of'}],[{t:'the fastest coding agents',s:'bi'}],[{t:'out there'},{t:'without',g:true}]])},
+ {id:'S56',beat:'S33',d:38,words:'paying a cent more.',
+  motion:{p:'"a cent more" lands bold upright; a second sheet peeks out.',s:'Card drifts up to y 320.',a:'Block drift 2 px.'},
+  cap:'line 3 "out there without paying" regular + "a cent more" bold 56.',place:'caption block y 720-920.',
+  sfx:'pop',assets:'none new',
+  r:()=>ground()+card(290,320,500,300,uiGithub(500,300),{sheets:2})+cap(720,[[{t:'so you get one of'}],[{t:'the fastest coding agents',s:'bi'}],[{t:'out there without paying'},{t:'a cent more',s:'bold'}]])},
+ {id:'S57',beat:'S34',d:8,words:'',brk:true,
+  motion:{p:'Blur transition into the CTA; the ground darkens 6% during the blur.',s:'none',a:'none'},cap:'none',place:'full frame',sfx:'blur-swell',assets:'none',
+  r:()=>blurOf(ground()+card(290,320,500,300,uiGithub(500,300),{sheets:2})+cap(720,[[{t:'so you get one of'}],[{t:'the fastest coding agents',s:'bi'}],[{t:'out there without paying'},{t:'a cent more',s:'bold'}]]))},
+ {id:'S58',beat:'S34',d:30,words:'Comment HARNESS',
+  motion:{p:'Darker grey ground. "Comment" lands small, then "HARNESS" in quotes punches in huge (scale 1.1 to 1).',s:'Quote marks pop a frame after the word.',a:'Word breathes 1%.'},
+  cap:'"Comment" regular 44; "HARNESS" bold 128 in curly quotes.',place:'"Comment" y 440; "HARNESS" y 500-640, centred.',
+  sfx:'riser (start), pop',assets:'none',
+  r:()=>ground({dark:true})+cap(440,[[{t:'Comment',s:'reg'}],[{t:'&ldquo;HARNESS&rdquo;',s:'huge'}]])},
+ {id:'S59',beat:'S35',d:32,words:"and I'll send you",
+  motion:{p:'The guide mock (tilted 3D page, one sheet behind) slides in from the bottom right and settles under the keyword (12 frames).',s:'Caption lands under it.',a:'Mock keeps a slow rotateZ drift of 1 deg.'},
+  cap:'"I\'ll send you" regular 40.',place:'Mock x 240-840 y 680-1080 (perspective rotateX 52, rotateZ -12); caption y 1120.',
+  sfx:'whoosh-soft',assets:'3D guide mock (image tool): the JCode setup guide page',
+  r:()=>ground({dark:true})+cap(440,[[{t:'Comment',s:'reg'}],[{t:'&ldquo;HARNESS&rdquo;',s:'huge'}]])+GH(guideMock(420,860,600,400,{g:true}))+guideMock(240,680,600,400,{g:true})+hint('M900 1000 L800 900')+cap(1120,[[{t:"I'll send"},{t:'you',g:true}]])},
+ {id:'S60',beat:'S35',d:24,words:'the exact steps',
+  motion:{p:'The step list on the mock reveals line by line (ink darkens); "exact steps" lands bold.',s:'Mock settles flat by 4 deg.',a:'Keyword breathes.'},
+  cap:'"I\'ll send you the" regular + "exact steps" bold 56.',place:'caption y 1120.',
+  sfx:'tick (lines)',assets:'none new',
+  r:()=>ground({dark:true})+cap(440,[[{t:'Comment',s:'reg'}],[{t:'&ldquo;HARNESS&rdquo;',s:'huge'}]])+guideMock(240,680,600,400,{})+cap(1120,[[{t:"I'll send you the"},{t:'exact steps',s:'bold'}]])},
+ {id:'S61',beat:'S35',d:32,words:'to set it up.',
+  motion:{p:'Line 2 lands; the riser peaks on "up".',s:'Mock sheet behind slides out 10 px.',a:'Keyword breathes; mock drift.'},
+  cap:'line 2 "to set it up" regular 40.',place:'caption block y 1120-1230.',
+  sfx:'riser (peak)',assets:'none new',
+  r:()=>ground({dark:true})+cap(440,[[{t:'Comment',s:'reg'}],[{t:'&ldquo;HARNESS&rdquo;',s:'huge'}]])+guideMock(240,680,600,400,{})+cap(1110,[[{t:"I'll send you the"},{t:'exact steps',s:'bold'}],[{t:'to set it up.'}]])},
+ {id:'S62',beat:'S35',d:41,words:'',tail:true,
+  motion:{p:'Hold for reading: the mock rotates slowly (rotateZ -12 to -8 deg), the keyword pulses once at 1.03.',s:'The step list on the mock scrolls up 20 px.',a:'Vignette breathes.'},
+  cap:'unchanged from S61.',place:'unchanged.',sfx:'none (riser tail decays)',assets:'none',
+  r:()=>ground({dark:true})+cap(440,[[{t:'Comment',s:'reg'}],[{t:'&ldquo;HARNESS&rdquo;',s:'huge'}]])+guideMock(240,680,600,400,{tf:'perspective(1800px) rotateX(52deg) rotateZ(-8deg)',rot:4})+cap(1110,[[{t:"I'll send you the"},{t:'exact steps',s:'bold'}],[{t:'to set it up.'}]])},
+];
+function raceRows(stage){
+  let h=cap(800,[[{t:'opens in'}]],{align:'flex-start',x:140,w:820});
+  h+=`<div style="position:absolute;left:140px;top:860px;display:flex;align-items:center;gap:18px">${inlineChip('JCode',{r:26})}<div style="width:80px;height:34px;border-radius:8px;background:#111"></div><span style="font-size:56px;font-weight:800;letter-spacing:-1px">14 ms</span></div>`;
+  h+=`<div style="position:absolute;left:140px;top:920px;display:flex;align-items:center;gap:18px">${inlineChip('Codex',{r:26,g:!stage})}<div style="width:${stage?620:620}px;height:34px;border-radius:8px;background:#EDEDED;overflow:hidden"><div style="width:${stage?'100%':'0%'};height:100%;background:#111"></div></div>${stage?`<span style="font-size:56px;font-weight:800;letter-spacing:-1px">883 ms</span>`:''}</div>`;
+  if(stage) h+=`<div style="position:absolute;left:220px;top:990px;font-size:36px;font-weight:700;color:#111">63x faster to open</div>`;
+  return h;
+}
+// compute frame ranges
+(function(){ let f=0; MAIN.forEach(s=>{ s.start=f; s.end=f+s.d-1; f+=s.d; }); MAIN.total=f;
+  HOOKS.forEach(h=>{ let g=0; h.shots.forEach(s=>{ s.start=g; s.end=g+s.d-1; g+=s.d; }); h.total=g; }); })();
+/*DATA-END*/
+
+// ---------- page build ----------
+const frameEl=(html)=>`<div class="frame"><div class="stage"><div class="crtsrc">${html}</div>${crt()}${veil()}</div></div>`;
+function shotCard(s){
+  const dur=s.d;
+  return `<div class="shot ${s.brk?'break':''}">${frameEl(s.r())}
+   <div class="fid"><b>${s.id}</b><span>f ${s.start}-${s.end} (${dur})</span><span class="beat">plan ${s.beat}</span></div>
+   <div class="words ${s.words?'':'none'}">${s.words||(s.brk?'blur break, no words':'hold, no words')}</div>
+   <dl><dt>Primary</dt><dd>${s.motion.p}</dd><dt>Secondary</dt><dd>${s.motion.s}</dd><dt>Ambient</dt><dd>${s.motion.a}</dd><dt>Caption</dt><dd>${s.cap}</dd><dt>Place</dt><dd>${s.place}</dd><dt>SFX</dt><dd>${s.sfx}</dd><dt>Assets</dt><dd>${s.assets}</dd></dl></div>`;
+}
+document.getElementById('main').innerHTML=MAIN.map(shotCard).join('');
+document.getElementById('hooks').innerHTML=HOOKS.map(h=>{
+  const body=h.id==='H1'
+    ? `<div class="frames">${MAIN.slice(0,7).filter((_,i)=>[0,4,6].includes(i)).map(s=>`<div class="hookframe"><div class="fid" style="margin-bottom:6px"><b>${s.id}</b><span>f ${s.start}-${s.end}</span></div>${frameEl(s.r())}</div>`).join('')}</div><p class="line" style="margin-top:10px">${h.note}</p>`
+    : `<div class="frames">${h.frames.map(i=>h.shots[i-1]).map(s=>`<div class="hookframe" style="flex:none;width:300px"><div class="fid" style="margin-bottom:6px"><b>${s.k}</b><span>f ${s.start}-${s.end}</span></div>${frameEl(HOOK_RENDER[s.k]())}<div style="font-size:11px;color:#333;margin-top:6px"><b>${s.words}</b><br>${s.motion}<br><span style="color:#777">Caption: ${s.cap} SFX: ${s.sfx}</span></div></div>`).join('')}</div>`;
+  return `<div class="hook"><h3>${h.id}: ${h.title} <span style="color:#999;font-weight:400">(${h.total} frames, body starts at f ${h.total})</span></h3><p class="line">${h.line}</p>${body}</div>`;
+}).join('');
+document.getElementById('m-frames').textContent=MAIN.total.toLocaleString();
+document.getElementById('m-run').textContent=(MAIN.total/30).toFixed(1)+' s';
+document.getElementById('m-shots').textContent=MAIN.length;
+const btn=document.getElementById('safe'), crtBtn=document.getElementById('crtbtn');
+new MutationObserver(()=>{ btn.textContent='Safe zone veil: '+(document.body.classList.contains('safe')?'on':'off'); crtBtn.textContent='CRT: '+(document.body.classList.contains('crt')?'on':'off'); }).observe(document.body,{attributes:true});
+</script>
+</body>
+</html>
